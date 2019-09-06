@@ -3,6 +3,17 @@
     <head>
         <meta charset="utf-8" />
         <title>Hello Analytics - A quickstart guide for JavaScript</title>
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-JDQRRS6ZXN"></script>
+        <script>
+            window.dataLayer = window.dataLayer || []
+            function gtag() {
+                dataLayer.push(arguments)
+            }
+            gtag('js', new Date())
+
+            gtag('config', 'G-JDQRRS6ZXN')
+        </script>
     </head>
     <body>
         <button id="auth-button" hidden>Authorize</button>
