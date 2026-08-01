@@ -1,6 +1,20 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<!-- 沒有這行，iPhone 會把整頁縮成桌面寬度顯示 -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>小雞上工 職缺分析器</title>
-
+<meta name="description" content="把小雞上工的職缺截圖整理成可排名的清單，一鍵匯出 Excel 與截圖封包。">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#F7F6F2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#141517" media="(prefers-color-scheme: dark)">
+<!-- 刻意不加 apple-mobile-web-app-capable：全螢幕模式下 iOS 的檔案下載會失效，
+     而下載 Excel／ZIP 正是這個工具的重點，所以讓它留在 Safari 裡開。 -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%90%A3%3C/text%3E%3C/svg%3E">
 <style>
+html{background:#F7F6F2}
+@media (prefers-color-scheme:dark){html{background:#141517}}
 /* ============================================================
    小雞上工 職缺分析器 — 薪資帳本
    Tokens first; components style through tokens only.
@@ -344,6 +358,8 @@ th,td{padding:7px 10px; text-align:left; border-bottom:1px solid var(--rule-fain
 th{font-family:var(--font-mono); font-size:10.5px; letter-spacing:.08em; color:var(--ink-3); background:var(--surface-2)}
 td.num{font-family:var(--font-mono); font-variant-numeric:tabular-nums; text-align:right}
 </style>
+</head>
+<body>
 
 <header class="masthead">
   <div class="masthead-in">
@@ -1390,3 +1406,6 @@ renderPreview();
 updateStorage();
 switchTab("add");
 </script>
+
+</body>
+</html>
