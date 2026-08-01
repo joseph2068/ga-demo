@@ -1,0 +1,1411 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<!-- 沒有這行，iPhone 會把整頁縮成桌面寬度顯示 -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>小雞上工 職缺分析器</title>
+<meta name="description" content="把小雞上工的職缺截圖整理成可排名的清單，一鍵匯出 Excel 與截圖封包。">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#F7F6F2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#141517" media="(prefers-color-scheme: dark)">
+<!-- 刻意不加 apple-mobile-web-app-capable：全螢幕模式下 iOS 的檔案下載會失效，
+     而下載 Excel／ZIP 正是這個工具的重點，所以讓它留在 Safari 裡開。 -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%90%A3%3C/text%3E%3C/svg%3E">
+<style>
+html{background:#F7F6F2}
+@media (prefers-color-scheme:dark){html{background:#141517}}
+/* ============================================================
+   小雞上工 職缺分析器 — 薪資帳本
+   Tokens first; components style through tokens only.
+   ============================================================ */
+:root{
+  /* ground & surfaces — neutrals biased warm toward the amber accent */
+  --paper:#F7F6F2;
+  --surface:#FFFFFF;
+  --surface-2:#EFEDE6;
+  --rule:#DFDCD2;
+  --rule-faint:#EAE7DE;
+
+  /* ink */
+  --ink:#1B1D1F;
+  --ink-2:#565A5C;
+  --ink-3:#8B8D8A;
+
+  /* accent — 蛋黃琥珀 */
+  --accent:#B26E00;        /* text-safe on light ground */
+  --accent-mark:#E39A12;   /* fills, meters */
+  --accent-soft:#FAEFD8;
+
+  /* semantic — reserved for 推薦度狀態, never used as an accent */
+  --good:#2E6E52;
+  --good-soft:#E2EFE8;
+  --warn:#9E5A1C;
+  --warn-soft:#F7E9DA;
+  --crit:#A32820;
+  --crit-soft:#F7E2E0;
+
+  --shadow:0 1px 2px rgba(27,29,31,.05), 0 6px 20px -12px rgba(27,29,31,.18);
+
+  --font-sans:"PingFang TC","Noto Sans TC","Heiti TC",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+  --font-mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,"Roboto Mono","Noto Sans Mono",monospace;
+
+  --r-sm:6px; --r-md:10px; --r-lg:14px;
+  --maxw:680px;
+}
+
+@media (prefers-color-scheme:dark){
+  :root{
+    --paper:#141517; --surface:#1B1D20; --surface-2:#23262A;
+    --rule:#31353A; --rule-faint:#26292D;
+    --ink:#EDEBE6; --ink-2:#ADB0B3; --ink-3:#7C807F;
+    --accent:#F2B23F; --accent-mark:#E8A62A; --accent-soft:#382E18;
+    --good:#67BE92; --good-soft:#1D2F27;
+    --warn:#E0964F; --warn-soft:#33271C;
+    --crit:#E0685C; --crit-soft:#33211F;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 6px 20px -12px rgba(0,0,0,.6);
+  }
+}
+/* viewer toggle must win in BOTH directions */
+:root[data-theme="dark"]{
+  --paper:#141517; --surface:#1B1D20; --surface-2:#23262A;
+  --rule:#31353A; --rule-faint:#26292D;
+  --ink:#EDEBE6; --ink-2:#ADB0B3; --ink-3:#7C807F;
+  --accent:#F2B23F; --accent-mark:#E8A62A; --accent-soft:#382E18;
+  --good:#67BE92; --good-soft:#1D2F27;
+  --warn:#E0964F; --warn-soft:#33271C;
+  --crit:#E0685C; --crit-soft:#33211F;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 6px 20px -12px rgba(0,0,0,.6);
+}
+:root[data-theme="light"]{
+  --paper:#F7F6F2; --surface:#FFFFFF; --surface-2:#EFEDE6;
+  --rule:#DFDCD2; --rule-faint:#EAE7DE;
+  --ink:#1B1D1F; --ink-2:#565A5C; --ink-3:#8B8D8A;
+  --accent:#B26E00; --accent-mark:#E39A12; --accent-soft:#FAEFD8;
+  --good:#2E6E52; --good-soft:#E2EFE8;
+  --warn:#9E5A1C; --warn-soft:#F7E9DA;
+  --crit:#A32820; --crit-soft:#F7E2E0;
+  --shadow:0 1px 2px rgba(27,29,31,.05), 0 6px 20px -12px rgba(27,29,31,.18);
+}
+
+*{box-sizing:border-box}
+/* .btn sets display:inline-flex, which outranks the UA's [hidden]{display:none} */
+[hidden]{display:none !important}
+body{
+  margin:0; background:var(--paper); color:var(--ink);
+  font-family:var(--font-sans); font-size:16px; line-height:1.6;
+  -webkit-text-size-adjust:100%; -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3{text-wrap:balance; margin:0; line-height:1.25; font-weight:700}
+p{margin:0}
+button,input,select,textarea{font:inherit; color:inherit}
+:focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none !important; transition:none !important}}
+
+.wrap{max-width:var(--maxw); margin:0 auto; padding:0 16px 128px}
+
+/* ---------- masthead ---------- */
+.masthead{
+  border-bottom:1px solid var(--rule);
+  background:
+    repeating-linear-gradient(to bottom, transparent 0 25px,
+      color-mix(in srgb, var(--rule-faint) 55%, transparent) 25px 26px);
+  background-color:var(--surface);
+}
+.masthead-in{max-width:var(--maxw); margin:0 auto; padding:20px 16px 16px}
+.eyebrow{
+  font-family:var(--font-mono); font-size:11px; letter-spacing:.16em;
+  color:var(--accent); text-transform:uppercase; margin-bottom:6px;
+}
+.masthead h1{font-size:26px; letter-spacing:-.01em}
+.masthead .sub{color:var(--ink-2); font-size:14px; margin-top:6px}
+
+/* ---------- tabs ---------- */
+.tabs{
+  position:sticky; top:0; z-index:20;
+  background:color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter:saturate(1.4) blur(10px);
+  border-bottom:1px solid var(--rule);
+}
+.tabs-in{
+  max-width:var(--maxw); margin:0 auto; padding:8px 16px;
+  display:flex; gap:4px; overflow-x:auto; scrollbar-width:none;
+}
+.tabs-in::-webkit-scrollbar{display:none}
+.tab{
+  flex:1 0 auto; border:1px solid transparent; background:transparent;
+  color:var(--ink-2); padding:7px 13px; border-radius:999px; cursor:pointer;
+  font-size:14px; font-weight:600; white-space:nowrap; transition:.15s;
+}
+.tab:hover{color:var(--ink)}
+.tab[aria-selected="true"]{background:var(--ink); color:var(--paper)}
+.tab .n{font-family:var(--font-mono); font-size:12px; opacity:.72; margin-left:5px}
+
+.panel{display:none; padding-top:22px}
+.panel.on{display:block}
+
+/* ---------- cards / blocks ---------- */
+.card{
+  background:var(--surface); border:1px solid var(--rule);
+  border-radius:var(--r-lg); padding:18px; box-shadow:var(--shadow);
+}
+.stack{display:flex; flex-direction:column; gap:16px}
+.stack-sm{display:flex; flex-direction:column; gap:9px}
+
+.label{
+  display:block; font-family:var(--font-mono); font-size:11px;
+  letter-spacing:.1em; color:var(--ink-3); margin-bottom:5px;
+}
+.field{
+  width:100%; background:var(--paper); border:1px solid var(--rule);
+  border-radius:var(--r-sm); padding:9px 11px; font-size:15px;
+}
+.field:focus{border-color:var(--accent); background:var(--surface)}
+textarea.field{min-height:150px; resize:vertical; line-height:1.65; font-size:15px}
+.grid2{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+@media (max-width:460px){.grid2{grid-template-columns:1fr}}
+
+/* ---------- buttons ---------- */
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:7px;
+  border:1px solid var(--rule); background:var(--surface); color:var(--ink);
+  padding:10px 16px; border-radius:var(--r-sm); font-size:15px; font-weight:600;
+  cursor:pointer; transition:.15s;
+}
+.btn:hover{border-color:var(--ink-3)}
+.btn:active{transform:translateY(1px)}
+.btn-primary{background:var(--ink); color:var(--paper); border-color:var(--ink)}
+.btn-primary:hover{opacity:.88; border-color:var(--ink)}
+.btn-accent{background:var(--accent-soft); border-color:var(--accent-mark); color:var(--accent)}
+.btn-sm{padding:6px 11px; font-size:13px}
+.btn-danger{color:var(--crit); border-color:var(--rule)}
+.btn-danger:hover{border-color:var(--crit)}
+.btn-row{display:flex; gap:9px; flex-wrap:wrap}
+
+/* ---------- steps (a real sequence, so it's numbered) ---------- */
+.steps{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:13px}
+.steps li{display:grid; grid-template-columns:26px 1fr; gap:12px; align-items:start}
+.steps .num{
+  font-family:var(--font-mono); font-size:12px; font-weight:600;
+  color:var(--accent); background:var(--accent-soft);
+  border-radius:var(--r-sm); text-align:center; padding:3px 0; line-height:1.5;
+}
+.steps .t{font-size:14.5px; color:var(--ink-2)}
+.steps .t b{color:var(--ink); font-weight:650}
+
+/* ---------- summary stat tiles (headline numbers, not charts) ---------- */
+.tiles{display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:18px}
+@media (max-width:460px){.tiles{gap:8px}}
+.tile{
+  background:var(--surface); border:1px solid var(--rule);
+  border-radius:var(--r-md); padding:12px 13px;
+}
+.tile .k{font-family:var(--font-mono); font-size:10.5px; letter-spacing:.09em; color:var(--ink-3)}
+.tile .v{
+  font-family:var(--font-mono); font-variant-numeric:tabular-nums;
+  font-size:clamp(18px,5.4vw,23px); font-weight:600; letter-spacing:-.03em;
+  margin-top:3px; line-height:1.15; white-space:nowrap;
+}
+/* unit gets its own line by design — never left to wrap as an orphan */
+.tile .v .u{
+  display:block; font-family:var(--font-sans); font-size:11px; font-weight:500;
+  color:var(--ink-3); letter-spacing:0; margin-top:2px;
+}
+
+/* ---------- ledger list ---------- */
+.toolbar{
+  display:flex; gap:9px; align-items:center; justify-content:space-between;
+  margin-bottom:10px; flex-wrap:wrap;
+}
+.toolbar .lbl{font-family:var(--font-mono); font-size:11px; letter-spacing:.1em; color:var(--ink-3)}
+.ledger{
+  background:var(--surface); border:1px solid var(--rule);
+  border-radius:var(--r-lg); overflow:hidden;
+}
+.row{
+  display:grid; grid-template-columns:30px 1fr auto; gap:12px;
+  padding:14px 15px; border-bottom:1px solid var(--rule-faint); align-items:start;
+}
+.row:last-child{border-bottom:0}
+.rank{
+  font-family:var(--font-mono); font-variant-numeric:tabular-nums;
+  font-size:13px; color:var(--ink-3); padding-top:2px;
+}
+.row.top .rank{color:var(--accent); font-weight:600}
+.rtitle{font-weight:650; font-size:16px; letter-spacing:-.005em}
+.rco{font-size:13.5px; color:var(--ink-2); margin-top:1px}
+.rmeta{
+  display:flex; flex-wrap:wrap; gap:5px; margin-top:8px;
+  font-family:var(--font-mono); font-size:11.5px; color:var(--ink-2);
+}
+.chip{
+  background:var(--surface-2); border-radius:4px; padding:2px 6px;
+  font-variant-numeric:tabular-nums;
+}
+.chip.tag{background:transparent; border:1px solid var(--rule); color:var(--ink-3)}
+.chip.miss{background:var(--warn-soft); color:var(--warn)}
+
+.right{text-align:right; min-width:104px}
+.rate{
+  font-family:var(--font-mono); font-variant-numeric:tabular-nums;
+  font-size:20px; font-weight:600; letter-spacing:-.02em; line-height:1.2;
+}
+.rate small{font-size:11px; color:var(--ink-3); font-weight:500; display:block; margin-top:1px}
+.score-line{
+  display:flex; align-items:center; justify-content:flex-end; gap:6px; margin-top:8px;
+  font-family:var(--font-mono); font-variant-numeric:tabular-nums; font-size:12px; color:var(--ink-2);
+}
+/* single-series magnitude meter: one hue, thin mark, rounded data end */
+.meter{width:76px; height:6px; background:var(--surface-2); border-radius:3px; overflow:hidden}
+.meter i{display:block; height:100%; background:var(--accent-mark); border-radius:3px}
+.pill{
+  display:inline-block; font-family:var(--font-mono); font-size:10.5px;
+  letter-spacing:.06em; padding:2px 7px; border-radius:999px; margin-top:8px;
+}
+.pill.p-good{background:var(--good-soft); color:var(--good)}
+.pill.p-mid{background:var(--warn-soft); color:var(--warn)}
+.pill.p-low{background:var(--surface-2); color:var(--ink-3)}
+
+/* text actions, not three heavy buttons — the list is the thing being read */
+.rowact{
+  grid-column:1/-1; display:flex; align-items:center; gap:18px;
+  margin-top:10px; padding-top:9px; border-top:1px dashed var(--rule-faint);
+}
+.rowact button{
+  background:none; border:0; cursor:pointer; font-size:13px; font-weight:600;
+  color:var(--ink-3); padding:7px 3px; margin:-7px 0;   /* keeps a ~30px tap target */
+}
+.rowact button:hover{color:var(--ink)}
+.rowact button[data-act="del"]{margin-left:auto}
+.rowact button[data-act="del"]:hover{color:var(--crit)}
+.detail{
+  grid-column:1/-1; margin-top:11px; padding-top:12px;
+  border-top:1px dashed var(--rule); display:none;
+}
+.detail.on{display:block}
+.detail dl{display:grid; grid-template-columns:auto 1fr; gap:5px 14px; margin:0; font-size:14px}
+.detail dt{font-family:var(--font-mono); font-size:11px; letter-spacing:.08em; color:var(--ink-3); padding-top:4px}
+.detail dd{margin:0}
+.detail .raw{
+  margin-top:11px; background:var(--paper); border:1px solid var(--rule);
+  border-radius:var(--r-sm); padding:10px; font-size:12.5px; color:var(--ink-2);
+  white-space:pre-wrap; max-height:190px; overflow:auto;
+}
+.shot{
+  margin-top:11px; border:1px solid var(--rule); border-radius:var(--r-sm);
+  max-width:190px; display:block; cursor:zoom-in;
+}
+
+/* ---------- weights ---------- */
+.wrow{display:grid; grid-template-columns:1fr 116px 46px; gap:11px; align-items:center; padding:9px 0}
+.wrow + .wrow{border-top:1px solid var(--rule-faint)}
+.wrow .nm{font-size:14.5px}
+.wrow .nm em{display:block; font-style:normal; font-size:12px; color:var(--ink-3); margin-top:1px}
+.wrow output{
+  font-family:var(--font-mono); font-variant-numeric:tabular-nums;
+  font-size:13px; text-align:right; color:var(--ink-2);
+}
+input[type=range]{width:100%; accent-color:var(--accent-mark)}
+@media (max-width:460px){.wrow{grid-template-columns:1fr 92px 40px; gap:8px}}
+
+/* ---------- self-rating chips ---------- */
+.rate5{display:flex; gap:6px}
+.rate5 button{
+  flex:1; border:1px solid var(--rule); background:var(--paper); border-radius:var(--r-sm);
+  padding:7px 0; font-family:var(--font-mono); font-size:13px; cursor:pointer; color:var(--ink-2);
+}
+.rate5 button[aria-pressed="true"]{background:var(--accent-soft); border-color:var(--accent-mark); color:var(--accent); font-weight:600}
+
+/* ---------- misc ---------- */
+.note{font-size:13px; color:var(--ink-3); line-height:1.6}
+.hr{height:1px; background:var(--rule); border:0; margin:4px 0}
+.empty{text-align:center; padding:40px 18px; color:var(--ink-2)}
+.empty h3{font-size:17px; margin-bottom:7px}
+.sect-h{
+  font-family:var(--font-mono); font-size:11px; letter-spacing:.14em;
+  color:var(--ink-3); margin-bottom:9px;
+}
+.toast{
+  position:fixed; left:50%; bottom:22px; transform:translateX(-50%);
+  background:var(--ink); color:var(--paper); padding:10px 18px; border-radius:999px;
+  font-size:14px; z-index:80; opacity:0; pointer-events:none; transition:opacity .2s;
+  max-width:calc(100% - 32px); text-align:center;
+}
+.toast.on{opacity:1}
+.thumbs{display:flex; gap:8px; flex-wrap:wrap; margin-top:9px}
+.thumbs figure{margin:0; position:relative}
+.thumbs img{height:82px; border-radius:var(--r-sm); border:1px solid var(--rule); display:block}
+.thumbs button{
+  position:absolute; top:3px; right:3px; width:21px; height:21px; border-radius:50%;
+  border:0; background:var(--ink); color:var(--paper); font-size:13px; line-height:1; cursor:pointer;
+}
+.lightbox{
+  position:fixed; inset:0; background:rgba(10,10,12,.92); z-index:90;
+  display:none; align-items:center; justify-content:center; padding:18px; cursor:zoom-out;
+}
+.lightbox.on{display:flex}
+.lightbox img{max-width:100%; max-height:100%; border-radius:var(--r-sm)}
+.bar{
+  position:fixed; left:0; right:0; bottom:0; z-index:30;
+  background:color-mix(in srgb, var(--paper) 92%, transparent);
+  backdrop-filter:blur(10px); border-top:1px solid var(--rule); padding:11px 16px;
+}
+.bar-in{max-width:var(--maxw); margin:0 auto; display:flex; gap:9px}
+.bar .btn{flex:1}
+.tblwrap{overflow-x:auto; border:1px solid var(--rule); border-radius:var(--r-md)}
+table{border-collapse:collapse; width:100%; font-size:13px}
+th,td{padding:7px 10px; text-align:left; border-bottom:1px solid var(--rule-faint); white-space:nowrap}
+th{font-family:var(--font-mono); font-size:10.5px; letter-spacing:.08em; color:var(--ink-3); background:var(--surface-2)}
+td.num{font-family:var(--font-mono); font-variant-numeric:tabular-nums; text-align:right}
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="masthead-in">
+    <div class="eyebrow">薪資帳本 / SHIFT LEDGER</div>
+    <h1>小雞上工 職缺分析器</h1>
+    <p class="sub">截圖存檔、自動抓時薪與地點、依你的權重排名，一鍵匯出 Excel。</p>
+  </div>
+</header>
+
+<nav class="tabs">
+  <div class="tabs-in" role="tablist">
+    <button class="tab" role="tab" aria-selected="true" data-p="add">新增職缺</button>
+    <button class="tab" role="tab" aria-selected="false" data-p="list">排名<span class="n" id="tabCount">0</span></button>
+    <button class="tab" role="tab" aria-selected="false" data-p="weights">我的條件</button>
+    <button class="tab" role="tab" aria-selected="false" data-p="export">匯出</button>
+  </div>
+</nav>
+
+<main class="wrap">
+
+<!-- ===================== 新增 ===================== -->
+<section class="panel on" id="p-add">
+  <div class="stack">
+    <div class="card">
+      <div class="sect-h">在 iPhone 上怎麼用</div>
+      <ol class="steps">
+        <li><span class="num">1</span><span class="t">在小雞上工滑到想記的職缺，按<b>側鍵＋音量上鍵</b>截圖。想收幾個就連續截幾張。</span></li>
+        <li><span class="num">2</span><span class="t">回到相簿打開截圖，<b>長按文字</b>叫出實況文字 → <b>全選</b> → <b>拷貝</b>。iOS 內建的繁體中文辨識比任何網頁 OCR 都準。</span></li>
+        <li><span class="num">3</span><span class="t">回到這頁，貼進下面的框。時薪、地點、班別、標籤會<b>自動抓出來</b>，順手把截圖也附上。</span></li>
+      </ol>
+    </div>
+
+    <div class="card stack-sm">
+      <div>
+        <label class="label" for="raw">職缺文字（貼上後自動解析）</label>
+        <textarea class="field" id="raw" placeholder="在這裡貼上你從截圖拷貝的文字。&#10;&#10;也可以直接貼上截圖圖片本身，會自動變成附圖。"></textarea>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-accent btn-sm" id="btnParse">重新解析</button>
+        <button class="btn btn-sm" id="btnPickImg">附加截圖</button>
+        <button class="btn btn-sm" id="btnClear">清空</button>
+        <input type="file" id="imgInput" accept="image/*" multiple hidden>
+      </div>
+      <div class="thumbs" id="thumbs"></div>
+    </div>
+
+    <div class="card stack-sm">
+      <div class="sect-h">解析結果（可直接改）</div>
+      <div>
+        <label class="label" for="f_title">職缺名稱</label>
+        <input class="field" id="f_title" placeholder="例：飲料店外場">
+      </div>
+      <div>
+        <label class="label" for="f_company">店家 / 公司</label>
+        <input class="field" id="f_company" placeholder="例：清心福全 民生東路店">
+      </div>
+      <div class="grid2">
+        <div>
+          <label class="label" for="f_payType">薪資類型</label>
+          <select class="field" id="f_payType">
+            <option value="hourly">時薪</option>
+            <option value="daily">日薪</option>
+            <option value="monthly">月薪</option>
+            <option value="piece">論件 / 其他</option>
+            <option value="negotiable">面議 / 未寫</option>
+          </select>
+        </div>
+        <div>
+          <label class="label" for="f_pay">金額（NT$）</label>
+          <input class="field" id="f_pay" type="number" inputmode="numeric" placeholder="190">
+        </div>
+      </div>
+      <div class="grid2">
+        <div>
+          <label class="label" for="f_location">地點</label>
+          <input class="field" id="f_location" placeholder="台北市大安區">
+        </div>
+        <div>
+          <label class="label" for="f_distance">距離（公里）</label>
+          <input class="field" id="f_distance" type="number" step="0.1" inputmode="decimal" placeholder="留白＝不列入計分">
+        </div>
+      </div>
+      <div class="grid2">
+        <div>
+          <label class="label" for="f_shift">班別 / 時段</label>
+          <input class="field" id="f_shift" placeholder="18:00~22:00">
+        </div>
+        <div>
+          <label class="label" for="f_dates">工作日期</label>
+          <input class="field" id="f_dates" placeholder="8/5、8/6">
+        </div>
+      </div>
+      <div>
+        <label class="label" for="f_tags">標籤（逗號分隔）</label>
+        <input class="field" id="f_tags" placeholder="免經驗, 供餐, 可排班">
+      </div>
+      <div>
+        <label class="label" for="f_note">我的備註</label>
+        <input class="field" id="f_note" placeholder="離捷運近，但要站四小時">
+      </div>
+    </div>
+
+    <div class="card stack-sm">
+      <div class="sect-h">我的主觀評分（1＝差，5＝好）</div>
+      <div>
+        <span class="label">工作內容我有興趣嗎</span>
+        <div class="rate5" data-rate="interest"></div>
+      </div>
+      <div>
+        <span class="label">班別時段合我的作息嗎</span>
+        <div class="rate5" data-rate="shiftFit"></div>
+      </div>
+      <div>
+        <span class="label">店家 / 環境印象</span>
+        <div class="rate5" data-rate="impression"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bar">
+    <div class="bar-in">
+      <button class="btn" id="btnCancelEdit" hidden>取消編輯</button>
+      <button class="btn btn-primary" id="btnSave">存進帳本</button>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 排名 ===================== -->
+<section class="panel" id="p-list">
+  <div class="tiles">
+    <div class="tile"><div class="k">職缺數</div><div class="v" id="tCount">0</div></div>
+    <div class="tile"><div class="k">平均換算時薪</div><div class="v" id="tAvg">—</div></div>
+    <div class="tile"><div class="k">最高換算時薪</div><div class="v" id="tMax">—</div></div>
+  </div>
+
+  <div class="toolbar">
+    <span class="lbl">排序依據</span>
+    <select class="field" id="sortBy" style="width:auto; padding:6px 10px; font-size:14px">
+      <option value="score">總分（高→低）</option>
+      <option value="pay">換算時薪（高→低）</option>
+      <option value="dist">距離（近→遠）</option>
+      <option value="new">加入時間（新→舊）</option>
+    </select>
+  </div>
+
+  <div class="ledger" id="ledger"></div>
+</section>
+
+<!-- ===================== 條件 ===================== -->
+<section class="panel" id="p-weights">
+  <div class="stack">
+    <div class="card">
+      <div class="sect-h">計分權重</div>
+      <p class="note" style="margin-bottom:8px">拉高你在意的項目。分數是各項目的加權平均，某個項目沒資料時就從分母裡拿掉，不會拿假資料湊分。</p>
+      <div id="weights"></div>
+    </div>
+
+    <div class="card stack-sm">
+      <div class="sect-h">計分基準</div>
+      <div class="grid2">
+        <div>
+          <label class="label" for="s_base">基本時薪基準（NT$）</label>
+          <input class="field" id="s_base" type="number" inputmode="numeric">
+          <p class="note" style="margin-top:5px">等於這個數字＝薪資 0 分。請自行對照當年度法定基本工資調整。</p>
+        </div>
+        <div>
+          <label class="label" for="s_target">理想時薪（NT$）</label>
+          <input class="field" id="s_target" type="number" inputmode="numeric">
+          <p class="note" style="margin-top:5px">達到這個數字＝薪資滿分。</p>
+        </div>
+      </div>
+      <div>
+        <label class="label" for="s_maxkm">可接受最遠距離（公里）</label>
+        <input class="field" id="s_maxkm" type="number" step="0.5" inputmode="decimal">
+        <p class="note" style="margin-top:5px">0 公里＝距離滿分，超過這個數字＝0 分。</p>
+      </div>
+      <div>
+        <label class="label" for="s_hrsday">日薪換算工時（小時）</label>
+        <input class="field" id="s_hrsday" type="number" step="0.5" inputmode="decimal">
+        <p class="note" style="margin-top:5px">日薪 ÷ 這個時數＝換算時薪。月薪固定除以 174 小時。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 匯出 ===================== -->
+<section class="panel" id="p-export">
+  <div class="stack">
+    <div class="card stack-sm">
+      <div class="sect-h">下載</div>
+      <p class="note">完整封包最實用：一個 ZIP 裡面同時有 Excel 表和你所有原始截圖，解壓縮就能一起看。在 iPhone 上會存進「檔案」App。</p>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="btnZip">完整封包 .zip（Excel＋截圖）</button>
+        <button class="btn" id="btnXlsx">只要 Excel .xlsx</button>
+        <button class="btn" id="btnCsv">只要 CSV</button>
+      </div>
+      <hr class="hr">
+      <div class="btn-row">
+        <button class="btn btn-sm" id="btnBackup">備份資料 .json</button>
+        <button class="btn btn-sm" id="btnRestore">還原備份</button>
+        <input type="file" id="restoreInput" accept="application/json,.json" hidden>
+      </div>
+      <p class="note" id="storageNote"></p>
+    </div>
+
+    <div class="card">
+      <div class="sect-h">Excel 內容預覽</div>
+      <div class="tblwrap"><table id="preview"></table></div>
+    </div>
+
+    <div class="card">
+      <div class="sect-h">資料存在哪裡</div>
+      <p class="note">全部存在這支手機的瀏覽器裡，沒有任何東西上傳。清除 Safari 網站資料會一起被刪掉，所以重要的話請按上面的「完整封包」或「備份資料」存一份到檔案 App。</p>
+      <div class="btn-row" style="margin-top:11px">
+        <button class="btn btn-danger btn-sm" id="btnWipe">清空所有職缺</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="lightbox" id="lightbox"><img alt="截圖放大" id="lightboxImg"></div>
+
+<script>
+"use strict";
+/* ============================================================
+   Storage: metadata in localStorage, screenshots in IndexedDB
+   ============================================================ */
+const LS_JOBS = "xiaoji.jobs.v1", LS_CFG = "xiaoji.cfg.v1";
+
+const DB = (() => {
+  let p;
+  const open = () => p || (p = new Promise((res, rej) => {
+    const r = indexedDB.open("xiaoji-shots", 1);
+    r.onupgradeneeded = () => r.result.createObjectStore("shots");
+    r.onsuccess = () => res(r.result);
+    r.onerror = () => rej(r.error);
+  }));
+  const tx = async (mode, fn) => {
+    const db = await open();
+    return new Promise((res, rej) => {
+      const t = db.transaction("shots", mode), s = t.objectStore("shots");
+      const req = fn(s);
+      t.oncomplete = () => res(req && req.result);
+      t.onerror = () => rej(t.error);
+    });
+  };
+  return {
+    put: (k, v) => tx("readwrite", s => s.put(v, k)),
+    get: (k) => tx("readonly", s => s.get(k)),
+    del: (k) => tx("readwrite", s => s.delete(k)),
+    clear: () => tx("readwrite", s => s.clear()),
+  };
+})();
+
+const DEFAULT_CFG = {
+  weights: { pay: 35, distance: 25, interest: 20, shiftFit: 15, impression: 5 },
+  baseWage: 190, targetWage: 250, maxKm: 12, hoursPerDay: 8,
+};
+const WEIGHT_META = [
+  ["pay",        "薪資水準",   "換算成時薪後比較"],
+  ["distance",   "通勤距離",   "越近分數越高"],
+  ["interest",   "內容興趣",   "你自己的 1–5 評分"],
+  ["shiftFit",   "班別合適",   "你自己的 1–5 評分"],
+  ["impression", "店家印象",   "你自己的 1–5 評分"],
+];
+
+let jobs = [], cfg = { ...DEFAULT_CFG };
+let pendingShots = [];   // {id, blob, url, name}
+let editingId = null;
+let selfRating = { interest: 3, shiftFit: 3, impression: 3 };
+
+function loadState() {
+  try { jobs = JSON.parse(localStorage.getItem(LS_JOBS) || "[]"); } catch { jobs = []; }
+  try {
+    const c = JSON.parse(localStorage.getItem(LS_CFG) || "{}");
+    cfg = { ...DEFAULT_CFG, ...c, weights: { ...DEFAULT_CFG.weights, ...(c.weights || {}) } };
+  } catch { cfg = { ...DEFAULT_CFG }; }
+}
+function saveJobs() { localStorage.setItem(LS_JOBS, JSON.stringify(jobs)); }
+function saveCfg() { localStorage.setItem(LS_CFG, JSON.stringify(cfg)); }
+
+/* ============================================================
+   Parsing — tuned for 小雞上工 listing text
+   ============================================================ */
+const CITIES = "台北市|臺北市|新北市|基隆市|桃園市|新竹市|新竹縣|苗栗縣|台中市|臺中市|彰化縣|南投縣|雲林縣|嘉義市|嘉義縣|台南市|臺南市|高雄市|屏東縣|宜蘭縣|花蓮縣|台東縣|臺東縣|澎湖縣|金門縣|連江縣";
+/* 只收能區分職缺好壞的字；「打工/兼職/工讀」這種每則都有的字不列入 */
+const TAG_WORDS = ["免經驗","無經驗可","可排班","彈性排班","供餐","包吃","供宿","包住","日領","週領","月領","當日領","現領","學生可","高中生可","大學生可","急徵","短期","長期","輪班","需自備","免費停車","有勞健保","勞健保","可久任","男女不拘","限女","限男"];
+
+function toNum(s) { return Number(String(s).replace(/[, ]/g, "")); }
+
+function parseText(text) {
+  const out = { title:"", company:"", payType:"negotiable", pay:null, location:"", distance:null, shift:"", dates:"", tags:[] };
+  if (!text || !text.trim()) return out;
+  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+
+  /* --- 薪資 --- */
+  const payPatterns = [
+    [/時薪[^\d]{0,8}([\d,]+)/, "hourly"],
+    [/日薪[^\d]{0,8}([\d,]+)/, "daily"],
+    [/月薪[^\d]{0,8}([\d,]+)/, "monthly"],
+    [/([\d,]+)\s*元\s*\/?\s*(?:小?時)/, "hourly"],
+    [/([\d,]+)\s*元\s*\/?\s*(?:日|天)/, "daily"],
+    [/([\d,]+)\s*元\s*\/?\s*月/, "monthly"],
+    [/\$\s*([\d,]+)\s*\/\s*(?:小?時|hr)/i, "hourly"],
+    [/\$\s*([\d,]+)\s*\/\s*(?:日|天|day)/i, "daily"],
+    [/\$\s*([\d,]+)\s*\/\s*(?:月|mo)/i, "monthly"],
+  ];
+  for (const [re, type] of payPatterns) {
+    const m = text.match(re);
+    if (m) { const n = toNum(m[1]); if (n > 0) { out.payType = type; out.pay = n; break; } }
+  }
+  if (out.pay == null) {
+    if (/論件|按件|抽成/.test(text)) out.payType = "piece";
+    else if (/面議/.test(text)) out.payType = "negotiable";
+    else {
+      const m = text.match(/\$\s*([\d,]+)/);
+      if (m) {
+        const n = toNum(m[1]);
+        // 小雞上工 常見時薪落在 3 位數；4 位數多半是日薪
+        if (n >= 100 && n < 1000) { out.payType = "hourly"; out.pay = n; }
+        else if (n >= 1000 && n < 10000) { out.payType = "daily"; out.pay = n; }
+        else if (n >= 10000) { out.payType = "monthly"; out.pay = n; }
+      }
+    }
+  }
+
+  /* --- 地點 --- */
+  const loc = text.match(new RegExp("(" + CITIES + ")\\s*([\\u4e00-\\u9fa5]{1,3}[區鄉鎮市])?"));
+  if (loc) out.location = (loc[1] + (loc[2] || "")).trim();
+  else {
+    const mrt = text.match(/([一-龥A-Za-z0-9]{2,8})站/);
+    if (mrt) out.location = mrt[0];
+  }
+
+  /* --- 距離 --- */
+  const dkm = text.match(/([\d.]+)\s*(?:公里|km|KM|Km)/);
+  if (dkm) out.distance = parseFloat(dkm[1]);
+  else {
+    const dm = text.match(/([\d,]+)\s*(?:公尺|m\b)/);
+    if (dm) out.distance = Math.round(toNum(dm[1])) / 1000;
+  }
+
+  /* --- 時段（含全形冒號與波浪號）--- */
+  const DASH = "[~\\-–—〜～至到]";
+  const times = text.match(new RegExp("\\d{1,2}[:：]\\d{2}\\s*" + DASH + "\\s*\\d{1,2}[:：]\\d{2}", "g"));
+  if (times) out.shift = [...new Set(times)].join("、").replace(/：/g, ":");
+
+  /* --- 日期：先取完整日期，再從剩下的文字找 M/D，才不會重複抓到同一個日期 --- */
+  const full = text.match(/\d{4}[\/\-.]\d{1,2}[\/\-.]\d{1,2}/g) || [];
+  let rest = text;
+  full.forEach(f => { rest = rest.split(f).join(" "); });
+  const short = rest.match(/(?<![\d:：])\d{1,2}\/\d{1,2}(?![\d\/])/g) || [];
+  const ds = [...new Set([...full, ...short])];
+  if (ds.length) out.dates = ds.slice(0, 8).join("、");
+
+  /* --- 標籤：丟掉被其他標籤包住的字（有勞健保 vs 勞健保）--- */
+  const hits = [...new Set(TAG_WORDS.filter(t => text.includes(t)))];
+  out.tags = hits.filter(t => !hits.some(o => o !== t && o.includes(t)));
+
+  /* --- 職缺名稱 / 店家 --- */
+  /* 小雞上工 的卡片幾乎都是「職缺名稱」開頭，所以第一個乾淨的行就是職稱，
+     店家再從其餘行裡找。反過來猜會把「門市儲備幹部」誤判成店名。 */
+  const noisy = new RegExp(
+    "^(NT\\$|\\$|時薪|日薪|月薪|面議|論件|立即|應徵|收藏|分享|報名|距離|已有|徵才|檢舉|地圖|導航)" +
+    "|^(" + CITIES + ")" +
+    "|^\\d{1,2}[:：]\\d{2}" +
+    "|^\\d{1,4}[\\/\\-.]\\d{1,2}" +
+    "|^[\\d.,]+\\s*(公里|公尺|km|m)\\b"
+  );
+  const cand = lines.filter(l => l.length <= 30 && !noisy.test(l));
+  const coRe = /(公司|有限|股份|工作室|企業|商行|分店|餐廳|超商|飲料|咖啡|診所|集團|事業|行銷|科技|門市|店)/;
+  out.title = (cand[0] || lines[0] || "").slice(0, 40);
+  out.company = (cand.slice(1).find(l => coRe.test(l)) || "").slice(0, 40);
+
+  return out;
+}
+
+/* ============================================================
+   Scoring
+   ============================================================ */
+function hourlyEquiv(job) {
+  if (job.pay == null || !job.pay) return null;
+  if (job.payType === "hourly") return job.pay;
+  if (job.payType === "daily") return cfg.hoursPerDay > 0 ? job.pay / cfg.hoursPerDay : null;
+  if (job.payType === "monthly") return job.pay / 174;
+  return null;
+}
+const clamp01 = v => Math.max(0, Math.min(1, v));
+
+function scoreJob(job) {
+  const parts = [];
+  const h = hourlyEquiv(job);
+  if (h != null) {
+    const span = cfg.targetWage - cfg.baseWage;
+    parts.push(["pay", span > 0 ? clamp01((h - cfg.baseWage) / span) * 100 : (h >= cfg.targetWage ? 100 : 0)]);
+  }
+  if (job.distance != null && !Number.isNaN(job.distance)) {
+    parts.push(["distance", cfg.maxKm > 0 ? clamp01(1 - job.distance / cfg.maxKm) * 100 : 100]);
+  }
+  for (const k of ["interest", "shiftFit", "impression"]) {
+    const v = job[k];
+    if (v != null) parts.push([k, ((v - 1) / 4) * 100]);
+  }
+  let num = 0, den = 0;
+  for (const [k, s] of parts) { const w = cfg.weights[k] || 0; num += w * s; den += w; }
+  return {
+    total: den > 0 ? Math.round(num / den) : 0,
+    hourly: h,
+    missing: [h == null ? "薪資未知" : null, (job.distance == null || Number.isNaN(job.distance)) ? "距離未填" : null].filter(Boolean),
+  };
+}
+
+/* ============================================================
+   Rendering
+   ============================================================ */
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+const nt = n => "NT$" + Math.round(n).toLocaleString("en-US");
+
+let toastTimer;
+function toast(msg) {
+  const t = $("#toast"); t.textContent = msg; t.classList.add("on");
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("on"), 2200);
+}
+
+const PAY_LABEL = { hourly:"時薪", daily:"日薪", monthly:"月薪", piece:"論件", negotiable:"面議" };
+
+function decorated() {
+  const list = jobs.map(j => ({ ...j, _s: scoreJob(j) }));
+  const by = $("#sortBy").value;
+  const cmp = {
+    score: (a, b) => b._s.total - a._s.total,
+    pay:   (a, b) => (b._s.hourly ?? -1) - (a._s.hourly ?? -1),
+    dist:  (a, b) => (a.distance ?? 1e9) - (b.distance ?? 1e9),
+    new:   (a, b) => b.createdAt - a.createdAt,
+  }[by];
+  return list.sort(cmp);
+}
+
+function renderList() {
+  const list = decorated();
+  $("#tabCount").textContent = jobs.length;
+
+  const hs = list.map(j => j._s.hourly).filter(v => v != null);
+  const unit = `<span class="u">每小時</span>`;
+  $("#tAvg").innerHTML = hs.length ? nt(hs.reduce((a, b) => a + b, 0) / hs.length) + unit : "—";
+  $("#tMax").innerHTML = hs.length ? nt(Math.max(...hs)) + unit : "—";
+  $("#tCount").innerHTML = jobs.length + `<span class="u">筆</span>`;
+
+  const el = $("#ledger");
+  if (!list.length) {
+    el.innerHTML = `<div class="empty">
+      <h3>帳本還是空的</h3>
+      <p class="note">先到「新增職缺」貼一筆進來。想先看看長什麼樣子，可以載入三筆範例。</p>
+      <div class="btn-row" style="justify-content:center; margin-top:14px"><button class="btn btn-sm" id="btnDemo">載入範例資料</button></div>
+    </div>`;
+    $("#btnDemo").onclick = loadDemo;
+    return;
+  }
+
+  el.innerHTML = list.map((j, i) => {
+    const s = j._s;
+    const pill = s.total >= 75 ? ["p-good", "推薦"] : s.total >= 55 ? ["p-mid", "可考慮"] : ["p-low", "再看看"];
+    const meta = [];
+    if (j.location) meta.push(`<span class="chip">${esc(j.location)}</span>`);
+    if (j.distance != null) meta.push(`<span class="chip">${j.distance} km</span>`);
+    if (j.shift) meta.push(`<span class="chip">${esc(j.shift)}</span>`);
+    if (j.dates) meta.push(`<span class="chip">${esc(j.dates)}</span>`);
+    (j.tags || []).slice(0, 4).forEach(t => meta.push(`<span class="chip tag">${esc(t)}</span>`));
+    s.missing.forEach(m => meta.push(`<span class="chip miss">${esc(m)}</span>`));
+
+    const payTxt = j.pay != null
+      ? `${nt(j.pay)}<small>${PAY_LABEL[j.payType] || ""}${s.hourly != null && j.payType !== "hourly" ? " ・換算 " + nt(s.hourly) + "/時" : ""}</small>`
+      : `<span style="font-size:15px;color:var(--ink-3)">${PAY_LABEL[j.payType] || "未寫"}</span>`;
+
+    return `<article class="row ${i === 0 ? "top" : ""}" data-id="${j.id}">
+      <div class="rank">${String(i + 1).padStart(2, "0")}</div>
+      <div>
+        <div class="rtitle">${esc(j.title || "（未命名職缺）")}</div>
+        ${j.company ? `<div class="rco">${esc(j.company)}</div>` : ""}
+        <div class="rmeta">${meta.join("")}</div>
+      </div>
+      <div class="right">
+        <div class="rate">${payTxt}</div>
+        <div class="score-line"><span class="meter"><i style="width:${s.total}%"></i></span><b>${s.total}</b></div>
+        <span class="pill ${pill[0]}">${pill[1]}</span>
+      </div>
+      <div class="rowact">
+        <button type="button" data-act="detail">明細</button>
+        <button type="button" data-act="edit">編輯</button>
+        <button type="button" data-act="del">刪除</button>
+      </div>
+      <div class="detail" data-detail>
+        <dl>
+          <dt>薪資</dt><dd>${j.pay != null ? PAY_LABEL[j.payType] + " " + nt(j.pay) : PAY_LABEL[j.payType]}</dd>
+          <dt>換算時薪</dt><dd>${s.hourly != null ? nt(s.hourly) : "—"}</dd>
+          <dt>地點</dt><dd>${esc(j.location || "—")}</dd>
+          <dt>距離</dt><dd>${j.distance != null ? j.distance + " 公里" : "—"}</dd>
+          <dt>班別</dt><dd>${esc(j.shift || "—")}</dd>
+          <dt>日期</dt><dd>${esc(j.dates || "—")}</dd>
+          <dt>標籤</dt><dd>${esc((j.tags || []).join("、") || "—")}</dd>
+          <dt>自評</dt><dd>興趣 ${j.interest}／5・班別 ${j.shiftFit}／5・印象 ${j.impression}／5</dd>
+          <dt>備註</dt><dd>${esc(j.note || "—")}</dd>
+          <dt>建檔</dt><dd>${new Date(j.createdAt).toLocaleString("zh-TW")}</dd>
+        </dl>
+        <div data-shots></div>
+        ${j.rawText ? `<div class="raw">${esc(j.rawText)}</div>` : ""}
+      </div>
+    </article>`;
+  }).join("");
+}
+
+$("#ledger").addEventListener("click", async (e) => {
+  const btn = e.target.closest("button[data-act]"); if (!btn) return;
+  const row = btn.closest(".row"), id = row.dataset.id;
+  const act = btn.dataset.act;
+  if (act === "del") {
+    const j = jobs.find(x => x.id === id);
+    if (!confirm(`確定刪除「${j?.title || "這筆職缺"}」？截圖也會一起刪掉。`)) return;
+    for (const sid of (j?.shots || [])) await DB.del(sid).catch(() => {});
+    jobs = jobs.filter(x => x.id !== id); saveJobs(); renderList(); renderPreview(); updateStorage();
+    toast("已刪除");
+  } else if (act === "edit") {
+    startEdit(id);
+  } else if (act === "detail") {
+    const d = row.querySelector("[data-detail]");
+    d.classList.toggle("on");
+    btn.textContent = d.classList.contains("on") ? "收合" : "明細";
+    if (d.classList.contains("on")) {
+      const host = d.querySelector("[data-shots]");
+      if (!host.dataset.loaded) {
+        host.dataset.loaded = "1";
+        const j = jobs.find(x => x.id === id);
+        for (const sid of (j?.shots || [])) {
+          const blob = await DB.get(sid);
+          if (!blob) continue;
+          const img = document.createElement("img");
+          img.className = "shot"; img.alt = "職缺截圖"; img.src = URL.createObjectURL(blob);
+          img.onclick = () => { $("#lightboxImg").src = img.src; $("#lightbox").classList.add("on"); };
+          host.appendChild(img);
+        }
+      }
+    }
+  }
+});
+$("#lightbox").onclick = () => $("#lightbox").classList.remove("on");
+$("#sortBy").onchange = renderList;
+
+/* ============================================================
+   Add / edit form
+   ============================================================ */
+function renderRate5() {
+  $$(".rate5").forEach(host => {
+    const key = host.dataset.rate;
+    host.innerHTML = [1,2,3,4,5].map(n =>
+      `<button type="button" aria-pressed="${selfRating[key] === n}" data-v="${n}">${n}</button>`).join("");
+    host.onclick = (e) => {
+      const b = e.target.closest("button"); if (!b) return;
+      selfRating[key] = Number(b.dataset.v); renderRate5();
+    };
+  });
+}
+
+function fillForm(p) {
+  $("#f_title").value = p.title || "";
+  $("#f_company").value = p.company || "";
+  $("#f_payType").value = p.payType || "negotiable";
+  $("#f_pay").value = p.pay ?? "";
+  $("#f_location").value = p.location || "";
+  $("#f_distance").value = p.distance ?? "";
+  $("#f_shift").value = p.shift || "";
+  $("#f_dates").value = p.dates || "";
+  $("#f_tags").value = (p.tags || []).join(", ");
+  $("#f_note").value = p.note || "";
+}
+
+function doParse() {
+  const t = $("#raw").value;
+  if (!t.trim()) { toast("先貼上文字再解析"); return; }
+  fillForm({ ...parseText(t), note: $("#f_note").value });
+  toast("已解析，請確認欄位");
+}
+$("#btnParse").onclick = doParse;
+
+let parseTimer;
+$("#raw").addEventListener("input", () => {
+  clearTimeout(parseTimer);
+  parseTimer = setTimeout(() => { if ($("#raw").value.trim() && !editingId) fillForm({ ...parseText($("#raw").value), note: $("#f_note").value }); }, 350);
+});
+$("#raw").addEventListener("paste", (e) => {
+  const items = [...(e.clipboardData?.items || [])];
+  const imgs = items.filter(i => i.type.startsWith("image/"));
+  if (imgs.length) {
+    e.preventDefault();
+    imgs.forEach(i => { const f = i.getAsFile(); if (f) addShot(f); });
+    toast("已附加截圖");
+  }
+});
+
+$("#btnPickImg").onclick = () => $("#imgInput").click();
+$("#imgInput").onchange = (e) => { [...e.target.files].forEach(addShot); e.target.value = ""; };
+
+function addShot(file) {
+  const id = "s_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8);
+  pendingShots.push({ id, blob: file, url: URL.createObjectURL(file), name: file.name || "screenshot.png" });
+  renderThumbs();
+}
+function renderThumbs() {
+  $("#thumbs").innerHTML = pendingShots.map(s =>
+    `<figure><img src="${s.url}" alt="待附加的截圖"><button type="button" data-rm="${s.id}" aria-label="移除這張截圖">×</button></figure>`).join("");
+}
+$("#thumbs").onclick = (e) => {
+  const b = e.target.closest("button[data-rm]"); if (!b) return;
+  const s = pendingShots.find(x => x.id === b.dataset.rm);
+  if (s) URL.revokeObjectURL(s.url);
+  pendingShots = pendingShots.filter(x => x.id !== b.dataset.rm);
+  renderThumbs();
+};
+
+function resetForm() {
+  $("#raw").value = "";
+  fillForm({});
+  pendingShots.forEach(s => URL.revokeObjectURL(s.url));
+  pendingShots = []; renderThumbs();
+  selfRating = { interest: 3, shiftFit: 3, impression: 3 }; renderRate5();
+  editingId = null;
+  $("#btnSave").textContent = "存進帳本";
+  $("#btnCancelEdit").hidden = true;
+}
+$("#btnClear").onclick = () => { if (confirm("清空目前輸入的內容？")) resetForm(); };
+$("#btnCancelEdit").onclick = () => { resetForm(); toast("已取消編輯"); };
+
+async function startEdit(id) {
+  const j = jobs.find(x => x.id === id); if (!j) return;
+  resetForm();
+  editingId = id;
+  $("#raw").value = j.rawText || "";
+  fillForm(j);
+  selfRating = { interest: j.interest ?? 3, shiftFit: j.shiftFit ?? 3, impression: j.impression ?? 3 };
+  renderRate5();
+  for (const sid of (j.shots || [])) {
+    const blob = await DB.get(sid);
+    if (blob) pendingShots.push({ id: sid, blob, url: URL.createObjectURL(blob), name: sid + ".png", existing: true });
+  }
+  renderThumbs();
+  $("#btnSave").textContent = "更新這筆";
+  $("#btnCancelEdit").hidden = false;
+  switchTab("add");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+$("#btnSave").onclick = async () => {
+  const payType = $("#f_payType").value;
+  const payRaw = $("#f_pay").value.trim();
+  const distRaw = $("#f_distance").value.trim();
+  const job = {
+    id: editingId || "j_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6),
+    createdAt: editingId ? (jobs.find(x => x.id === editingId)?.createdAt || Date.now()) : Date.now(),
+    title: $("#f_title").value.trim(),
+    company: $("#f_company").value.trim(),
+    payType,
+    pay: payRaw === "" ? null : Number(payRaw),
+    location: $("#f_location").value.trim(),
+    distance: distRaw === "" ? null : Number(distRaw),
+    shift: $("#f_shift").value.trim(),
+    dates: $("#f_dates").value.trim(),
+    tags: $("#f_tags").value.split(/[,，、]/).map(s => s.trim()).filter(Boolean),
+    note: $("#f_note").value.trim(),
+    rawText: $("#raw").value.trim(),
+    interest: selfRating.interest, shiftFit: selfRating.shiftFit, impression: selfRating.impression,
+    shots: [],
+  };
+  if (!job.title && !job.company && !job.rawText) { toast("至少填職缺名稱，或貼上文字"); return; }
+
+  const prev = editingId ? (jobs.find(x => x.id === editingId)?.shots || []) : [];
+  const keep = new Set(pendingShots.map(s => s.id));
+  for (const sid of prev) if (!keep.has(sid)) await DB.del(sid).catch(() => {});
+
+  try {
+    for (const s of pendingShots) {
+      if (!s.existing) await DB.put(s.id, s.blob);
+      job.shots.push(s.id);
+    }
+  } catch (err) {
+    toast("截圖存不下了，請先匯出封包再清一些舊資料");
+    return;
+  }
+
+  if (editingId) jobs = jobs.map(x => x.id === editingId ? job : x);
+  else jobs.push(job);
+  saveJobs();
+  const wasEdit = !!editingId;
+  resetForm(); renderList(); renderPreview(); updateStorage();
+  toast(wasEdit ? "已更新" : "已存進帳本");
+  if (!wasEdit) switchTab("list");
+};
+
+/* ============================================================
+   Weights & settings
+   ============================================================ */
+function renderWeights() {
+  $("#weights").innerHTML = WEIGHT_META.map(([k, name, hint]) => `
+    <div class="wrow">
+      <label class="nm" for="w_${k}">${name}<em>${hint}</em></label>
+      <input type="range" id="w_${k}" min="0" max="50" step="5" value="${cfg.weights[k]}" data-w="${k}">
+      <output id="o_${k}">${cfg.weights[k]}</output>
+    </div>`).join("");
+  $$('#weights input[type=range]').forEach(r => {
+    r.oninput = () => {
+      cfg.weights[r.dataset.w] = Number(r.value);
+      $("#o_" + r.dataset.w).textContent = r.value;
+      saveCfg(); renderList(); renderPreview();
+    };
+  });
+  $("#s_base").value = cfg.baseWage;
+  $("#s_target").value = cfg.targetWage;
+  $("#s_maxkm").value = cfg.maxKm;
+  $("#s_hrsday").value = cfg.hoursPerDay;
+}
+[["#s_base","baseWage"],["#s_target","targetWage"],["#s_maxkm","maxKm"],["#s_hrsday","hoursPerDay"]].forEach(([sel, key]) => {
+  $(sel).addEventListener("input", () => {
+    const v = Number($(sel).value);
+    if (!Number.isFinite(v) || v < 0) return;
+    cfg[key] = v; saveCfg(); renderList(); renderPreview();
+  });
+});
+
+/* ============================================================
+   Export — CSV, XLSX, ZIP (all written from scratch, no libs)
+   ============================================================ */
+const COLUMNS = [
+  ["排名",       (j, s, i) => i + 1,                                  "n"],
+  ["總分",       (j, s) => s.total,                                   "n"],
+  ["推薦度",     (j, s) => s.total >= 75 ? "推薦" : s.total >= 55 ? "可考慮" : "再看看", "s"],
+  ["職缺名稱",   j => j.title,                                        "s"],
+  ["店家/公司",  j => j.company,                                      "s"],
+  ["薪資類型",   j => PAY_LABEL[j.payType] || "",                     "s"],
+  ["薪資金額",   j => j.pay ?? "",                                    "n"],
+  ["換算時薪",   (j, s) => s.hourly != null ? Math.round(s.hourly) : "", "n"],
+  ["地點",       j => j.location,                                     "s"],
+  ["距離(公里)", j => j.distance ?? "",                               "n"],
+  ["班別時段",   j => j.shift,                                        "s"],
+  ["工作日期",   j => j.dates,                                        "s"],
+  ["標籤",       j => (j.tags || []).join("、"),                      "s"],
+  ["興趣(1-5)",  j => j.interest,                                     "n"],
+  ["班別合適(1-5)", j => j.shiftFit,                                  "n"],
+  ["店家印象(1-5)", j => j.impression,                                "n"],
+  ["我的備註",   j => j.note,                                         "s"],
+  ["截圖檔名",   (j, s, i) => (j.shots || []).map((_, k) => shotName(j, i, k)).join("、"), "s"],
+  ["建檔時間",   j => new Date(j.createdAt).toLocaleString("zh-TW"),  "s"],
+  ["原始文字",   j => (j.rawText || "").replace(/\s+/g, " ").slice(0, 500), "s"],
+];
+
+function sanitize(s) { return String(s || "").replace(/[\\\/:*?"<>|\n\r\t]/g, "_").replace(/\s+/g, "_").slice(0, 30); }
+function shotName(job, idx, k) {
+  return `${String(idx + 1).padStart(2, "0")}_${sanitize(job.company || job.title || "職缺")}_${k + 1}.png`;
+}
+function rows() {
+  return decorated().map((j, i) => COLUMNS.map(([, get]) => {
+    const v = get(j, j._s, i);
+    return v === null || v === undefined ? "" : v;
+  }));
+}
+
+function buildCSV() {
+  const q = v => {
+    const s = String(v);
+    return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  };
+  const head = COLUMNS.map(c => q(c[0])).join(",");
+  const body = rows().map(r => r.map(q).join(",")).join("\r\n");
+  return "﻿" + head + "\r\n" + body + "\r\n";   // BOM so Excel reads 中文
+}
+
+/* ---- minimal store-only ZIP writer ---- */
+const CRC_TABLE = (() => {
+  const t = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) {
+    let c = n;
+    for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1;
+    t[n] = c >>> 0;
+  }
+  return t;
+})();
+function crc32(buf) {
+  let c = 0xFFFFFFFF;
+  for (let i = 0; i < buf.length; i++) c = CRC_TABLE[(c ^ buf[i]) & 0xFF] ^ (c >>> 8);
+  return (c ^ 0xFFFFFFFF) >>> 0;
+}
+const te = new TextEncoder();
+function dosTime(d) {
+  return { t: ((d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1)) & 0xFFFF,
+           d: (((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate()) & 0xFFFF };
+}
+/** entries: [{name:string, data:Uint8Array}] */
+function makeZip(entries) {
+  const now = dosTime(new Date());
+  const chunks = [], central = [];
+  let offset = 0;
+  for (const e of entries) {
+    const nameBytes = te.encode(e.name);
+    const crc = crc32(e.data), size = e.data.length;
+    const lf = new DataView(new ArrayBuffer(30));
+    lf.setUint32(0, 0x04034b50, true);
+    lf.setUint16(4, 20, true);        // version needed
+    lf.setUint16(6, 0x0800, true);    // UTF-8 filename flag
+    lf.setUint16(8, 0, true);         // method: store
+    lf.setUint16(10, now.t, true); lf.setUint16(12, now.d, true);
+    lf.setUint32(14, crc, true); lf.setUint32(18, size, true); lf.setUint32(22, size, true);
+    lf.setUint16(26, nameBytes.length, true); lf.setUint16(28, 0, true);
+    chunks.push(new Uint8Array(lf.buffer), nameBytes, e.data);
+
+    const cd = new DataView(new ArrayBuffer(46));
+    cd.setUint32(0, 0x02014b50, true);
+    cd.setUint16(4, 20, true); cd.setUint16(6, 20, true);
+    cd.setUint16(8, 0x0800, true); cd.setUint16(10, 0, true);
+    cd.setUint16(12, now.t, true); cd.setUint16(14, now.d, true);
+    cd.setUint32(16, crc, true); cd.setUint32(20, size, true); cd.setUint32(24, size, true);
+    cd.setUint16(28, nameBytes.length, true);
+    cd.setUint32(42, offset, true);
+    central.push(new Uint8Array(cd.buffer), nameBytes);
+    offset += 30 + nameBytes.length + size;
+  }
+  let centralSize = 0; central.forEach(c => centralSize += c.length);
+  const eocd = new DataView(new ArrayBuffer(22));
+  eocd.setUint32(0, 0x06054b50, true);
+  eocd.setUint16(8, entries.length, true); eocd.setUint16(10, entries.length, true);
+  eocd.setUint32(12, centralSize, true); eocd.setUint32(16, offset, true);
+  return new Blob([...chunks, ...central, new Uint8Array(eocd.buffer)], { type: "application/zip" });
+}
+
+/* ---- minimal XLSX writer (inline strings, no sharedStrings) ---- */
+const xesc = s => String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&apos;" }[c]))
+                           .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, "");
+function colRef(n) { let s = ""; n++; while (n > 0) { const r = (n - 1) % 26; s = String.fromCharCode(65 + r) + s; n = (n - r - 1) / 26; } return s; }
+
+function buildXlsx() {
+  const data = rows();
+  const sheetRows = [];
+  sheetRows.push(`<row r="1">` + COLUMNS.map((c, i) =>
+    `<c r="${colRef(i)}1" s="1" t="inlineStr"><is><t>${xesc(c[0])}</t></is></c>`).join("") + `</row>`);
+  data.forEach((r, ri) => {
+    const cells = r.map((v, ci) => {
+      const ref = colRef(ci) + (ri + 2);
+      const numeric = COLUMNS[ci][2] === "n" && v !== "" && Number.isFinite(Number(v));
+      return numeric
+        ? `<c r="${ref}"><v>${Number(v)}</v></c>`
+        : (v === "" ? `<c r="${ref}"/>` : `<c r="${ref}" t="inlineStr"><is><t xml:space="preserve">${xesc(v)}</t></is></c>`);
+    }).join("");
+    sheetRows.push(`<row r="${ri + 2}">${cells}</row>`);
+  });
+  const widths = [6,7,9,22,22,10,10,10,18,11,20,18,24,10,13,13,26,26,20,60];
+  const cols = `<cols>` + widths.map((w, i) => `<col min="${i+1}" max="${i+1}" width="${w}" customWidth="1"/>`).join("") + `</cols>`;
+
+  const sheet = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetPr><outlinePr/></sheetPr><sheetViews><sheetView workbookViewId="0" tabSelected="1"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><sheetFormatPr defaultRowHeight="16"/>${cols}<sheetData>${sheetRows.join("")}</sheetData><autoFilter ref="A1:${colRef(COLUMNS.length - 1)}${data.length + 1}"/></worksheet>`;
+
+  const contentTypes = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>`;
+
+  const rootRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`;
+
+  const workbook = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="職缺排名" sheetId="1" r:id="rId1"/></sheets></workbook>`;
+
+  const wbRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`;
+
+  const styles = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts><fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FFF6E4C4"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="2"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
+
+  return makeZip([
+    { name: "[Content_Types].xml", data: te.encode(contentTypes) },
+    { name: "_rels/.rels", data: te.encode(rootRels) },
+    { name: "xl/workbook.xml", data: te.encode(workbook) },
+    { name: "xl/_rels/workbook.xml.rels", data: te.encode(wbRels) },
+    { name: "xl/styles.xml", data: te.encode(styles) },
+    { name: "xl/worksheets/sheet1.xml", data: te.encode(sheet) },
+  ]);
+}
+
+function download(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+/* 下載檔名一律用 ASCII：瀏覽器碰到中文檔名會整個丟掉（連副檔名一起），
+   下載下來就變成沒有副檔名的 "download"，iPhone 的檔案 App 會開不起來。
+   ZIP 內部的中文檔名不受影響，照常保留。 */
+function stamp() {
+  const d = new Date(), p = n => String(n).padStart(2, "0");
+  return `${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}`;
+}
+function guard() {
+  if (!jobs.length) { toast("帳本還沒有職缺"); return false; }
+  return true;
+}
+
+$("#btnCsv").onclick = () => {
+  if (!guard()) return;
+  download(new Blob([buildCSV()], { type: "text/csv;charset=utf-8" }), `xiaoji-jobs-${stamp()}.csv`);
+  toast("CSV 已下載");
+};
+$("#btnXlsx").onclick = () => {
+  if (!guard()) return;
+  download(new Blob([buildXlsx()], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }), `xiaoji-jobs-${stamp()}.xlsx`);
+  toast("Excel 已下載");
+};
+$("#btnZip").onclick = async () => {
+  if (!guard()) return;
+  toast("打包中…");
+  const entries = [];
+  const xlsxBlob = buildXlsx();
+  entries.push({ name: "職缺排名.xlsx", data: new Uint8Array(await xlsxBlob.arrayBuffer()) });
+  entries.push({ name: "職缺排名.csv", data: te.encode(buildCSV()) });
+
+  const list = decorated();
+  let shotCount = 0;
+  for (let i = 0; i < list.length; i++) {
+    const j = list[i];
+    for (let k = 0; k < (j.shots || []).length; k++) {
+      const blob = await DB.get(j.shots[k]);
+      if (!blob) continue;
+      const ext = (blob.type && blob.type.split("/")[1] || "png").replace("jpeg", "jpg");
+      entries.push({
+        name: "screenshots/" + shotName(j, i, k).replace(/\.png$/, "." + ext),
+        data: new Uint8Array(await blob.arrayBuffer()),
+      });
+      shotCount++;
+    }
+  }
+  const readme = [
+    "小雞上工 職缺分析封包",
+    "匯出時間：" + new Date().toLocaleString("zh-TW"),
+    "職缺筆數：" + jobs.length,
+    "截圖張數：" + shotCount,
+    "",
+    "職缺排名.xlsx — 依你設定的權重排序的完整表格（Excel / Numbers 都能開）",
+    "職缺排名.csv  — 同樣內容的純文字版",
+    "screenshots/  — 原始截圖，檔名開頭的數字對應表格的「排名」欄",
+    "",
+    "計分設定",
+    "  基本時薪基準：" + cfg.baseWage,
+    "  理想時薪：" + cfg.targetWage,
+    "  可接受最遠距離：" + cfg.maxKm + " 公里",
+    "  日薪換算工時：" + cfg.hoursPerDay + " 小時",
+    "  權重：" + WEIGHT_META.map(([k, n]) => n + " " + cfg.weights[k]).join("、"),
+  ].join("\r\n");
+  entries.push({ name: "說明.txt", data: te.encode("﻿" + readme) });
+
+  download(makeZip(entries), `xiaoji-jobs-${stamp()}.zip`);
+  toast(`已打包 ${jobs.length} 筆職缺、${shotCount} 張截圖`);
+};
+
+$("#btnBackup").onclick = () => {
+  download(new Blob([JSON.stringify({ v: 1, cfg, jobs }, null, 2)], { type: "application/json" }), `xiaoji-backup-${stamp()}.json`);
+  toast("備份已下載（不含截圖）");
+};
+$("#btnRestore").onclick = () => $("#restoreInput").click();
+$("#restoreInput").onchange = async (e) => {
+  const f = e.target.files[0]; e.target.value = ""; if (!f) return;
+  try {
+    const d = JSON.parse(await f.text());
+    if (!Array.isArray(d.jobs)) throw new Error("格式不符");
+    if (!confirm(`要用備份裡的 ${d.jobs.length} 筆職缺取代目前的 ${jobs.length} 筆嗎？`)) return;
+    jobs = d.jobs.map(j => ({ ...j, shots: [] }));   // 截圖不在備份裡
+    if (d.cfg) cfg = { ...DEFAULT_CFG, ...d.cfg, weights: { ...DEFAULT_CFG.weights, ...(d.cfg.weights || {}) } };
+    saveJobs(); saveCfg(); renderWeights(); renderList(); renderPreview(); updateStorage();
+    toast("已還原");
+  } catch (err) {
+    toast("這個檔案讀不出來，請確認是本工具匯出的 .json");
+  }
+};
+$("#btnWipe").onclick = async () => {
+  if (!confirm("這會刪掉所有職缺和截圖，而且救不回來。確定嗎？")) return;
+  await DB.clear().catch(() => {});
+  jobs = []; saveJobs(); renderList(); renderPreview(); updateStorage();
+  toast("已清空");
+};
+
+function renderPreview() {
+  const data = rows().slice(0, 12);
+  $("#preview").innerHTML =
+    `<thead><tr>${COLUMNS.map(c => `<th>${esc(c[0])}</th>`).join("")}</tr></thead>` +
+    (data.length
+      ? `<tbody>${data.map(r => `<tr>${r.map((v, i) => `<td class="${COLUMNS[i][2] === "n" ? "num" : ""}">${esc(String(v).slice(0, 40))}</td>`).join("")}</tr>`).join("")}</tbody>`
+      : `<tbody><tr><td colspan="${COLUMNS.length}" style="color:var(--ink-3)">還沒有資料</td></tr></tbody>`);
+}
+
+async function updateStorage() {
+  const note = $("#storageNote");
+  try {
+    const est = await navigator.storage.estimate();
+    const mb = v => (v / 1048576).toFixed(1) + " MB";
+    note.textContent = `目前用掉 ${mb(est.usage || 0)}，這個瀏覽器大約可用 ${mb(est.quota || 0)}。`;
+  } catch { note.textContent = ""; }
+}
+
+/* ============================================================
+   Demo data — realistic 小雞上工 style listings
+   ============================================================ */
+function loadDemo() {
+  const now = Date.now();
+  jobs = jobs.concat([
+    { id:"demo1", createdAt:now-3000, title:"手搖飲外場", company:"清心福全 民生東路店", payType:"hourly", pay:210,
+      location:"台北市松山區", distance:1.8, shift:"18:00~22:00", dates:"8/5、8/6、8/7",
+      tags:["免經驗","可排班","供餐"], note:"離捷運南京三民站走路 5 分鐘", interest:4, shiftFit:5, impression:4,
+      rawText:"手搖飲外場\n清心福全 民生東路店\n時薪 $210\n台北市松山區・距離 1.8 公里\n18:00~22:00\n8/5 8/6 8/7\n免經驗 可排班 供餐", shots:[] },
+    { id:"demo2", createdAt:now-2000, title:"倉庫理貨助手", company:"永聯物流 五股倉", payType:"daily", pay:1600,
+      location:"新北市五股區", distance:14.5, shift:"08:00~17:00", dates:"8/9",
+      tags:["日領","免經驗","有勞健保"], note:"日領現金，但要搬重物，通勤太遠", interest:2, shiftFit:3, impression:3,
+      rawText:"倉庫理貨助手\n永聯物流 五股倉\n日薪 $1,600\n新北市五股區・距離 14.5 公里\n08:00~17:00\n8/9\n日領 免經驗 有勞健保", shots:[] },
+    { id:"demo3", createdAt:now-1000, title:"展場活動接待", company:"亞太會展行銷有限公司", payType:"hourly", pay:250,
+      location:"台北市信義區", distance:4.2, shift:"09:00~18:00", dates:"8/15、8/16",
+      tags:["短期","需自備","學生可"], note:"要自備黑色套裝，時薪高但只有兩天", interest:5, shiftFit:3, impression:4,
+      rawText:"展場活動接待\n亞太會展行銷有限公司\n時薪 $250\n台北市信義區・距離 4.2 公里\n09:00~18:00\n8/15 8/16\n短期 需自備 學生可", shots:[] },
+  ]);
+  saveJobs(); renderList(); renderPreview();
+  toast("已載入 3 筆範例，可以直接刪掉");
+}
+
+/* ============================================================
+   Tabs & boot
+   ============================================================ */
+function switchTab(name) {
+  $$(".tab").forEach(t => t.setAttribute("aria-selected", String(t.dataset.p === name)));
+  $$(".panel").forEach(p => p.classList.toggle("on", p.id === "p-" + name));
+  $(".bar").style.display = name === "add" ? "" : "none";
+}
+$$(".tab").forEach(t => t.onclick = () => switchTab(t.dataset.p));
+
+loadState();
+renderRate5();
+renderWeights();
+renderList();
+renderPreview();
+updateStorage();
+switchTab("add");
+</script>
+
+</body>
+</html>
