@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>財務投資追蹤 App</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <h1>💰 財務投資追蹤</h1>
+  <nav class="tabs" id="tabs">
+    <button class="tab-btn active" data-tab="dashboard">儀表板</button>
+    <button class="tab-btn" data-tab="income">收入</button>
+    <button class="tab-btn" data-tab="expense">支出</button>
+    <button class="tab-btn" data-tab="conversion">自我投資變現</button>
+    <button class="tab-btn" data-tab="investment">投資組合</button>
+  </nav>
+  <div class="topbar-actions">
+    <button id="exportBtn" class="btn-ghost" title="匯出資料為 JSON">匯出</button>
+    <label class="btn-ghost file-label" title="匯入先前匯出的 JSON">
+      匯入
+      <input type="file" id="importInput" accept="application/json" hidden>
+    </label>
+  </div>
+</header>
+
+<main>
+
+  <!-- Dashboard -->
+  <section id="tab-dashboard" class="tab-panel active">
+    <div class="stat-grid" id="statGrid"></div>
+
+    <div class="chart-grid">
+      <div class="card">
+        <h2>近 6 個月 收入 / 支出</h2>
+        <div id="monthlyChart" class="chart"></div>
+      </div>
+      <div class="card">
+        <h2>支出類別分佈</h2>
+        <div id="expenseCategoryChart" class="chart"></div>
+      </div>
+      <div class="card">
+        <h2>自我投資變現分析</h2>
+        <div id="conversionChart" class="chart"></div>
+      </div>
+      <div class="card">
+        <h2>投資組合分佈（依類型）</h2>
+        <div id="investmentTypeChart" class="chart"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Income -->
+  <section id="tab-income" class="tab-panel">
+    <div class="card">
+      <h2>新增收入</h2>
+      <form id="incomeForm" class="entry-form">
+        <input type="hidden" name="id">
+        <label>日期<input type="date" name="date" required></label>
+        <label>類別
+          <select name="category" required></select>
+        </label>
+        <label>金額<input type="number" name="amount" min="0" step="1" required placeholder="0"></label>
+        <label class="grow">備註<input type="text" name="note" placeholder="例如：7月薪水"></label>
+        <button type="submit" class="btn-primary">新增</button>
+        <button type="button" class="btn-ghost cancel-edit" hidden>取消編輯</button>
+      </form>
+    </div>
+    <div class="card">
+      <h2>收入紀錄</h2>
+      <div class="table-wrap">
+        <table id="incomeTable">
+          <thead><tr><th>日期</th><th>類別</th><th>金額</th><th>備註</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Expense -->
+  <section id="tab-expense" class="tab-panel">
+    <div class="card">
+      <h2>新增支出</h2>
+      <form id="expenseForm" class="entry-form">
+        <input type="hidden" name="id">
+        <label>日期<input type="date" name="date" required></label>
+        <label>類別
+          <select name="category" required></select>
+        </label>
+        <label>金額<input type="number" name="amount" min="0" step="1" required placeholder="0"></label>
+        <label class="grow">備註<input type="text" name="note" placeholder="例如：行銷課程"></label>
+
+        <fieldset class="conversion-fields" hidden>
+          <legend>💡 此類別屬於「自我投資」，可記錄變現狀況</legend>
+          <label class="checkbox"><input type="checkbox" name="monetized"> 已產生變現／回收</label>
+          <label>變現金額<input type="number" name="monetizedAmount" min="0" step="1" placeholder="0"></label>
+          <label>變現日期<input type="date" name="monetizedDate"></label>
+          <label class="grow">變現說明<input type="text" name="monetizedNote" placeholder="例如：接到一個 3 萬元的案子"></label>
+        </fieldset>
+
+        <button type="submit" class="btn-primary">新增</button>
+        <button type="button" class="btn-ghost cancel-edit" hidden>取消編輯</button>
+      </form>
+    </div>
+    <div class="card">
+      <h2>支出紀錄</h2>
+      <div class="table-wrap">
+        <table id="expenseTable">
+          <thead><tr><th>日期</th><th>類別</th><th>金額</th><th>備註</th><th>變現</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Conversion / Monetization analysis -->
+  <section id="tab-conversion" class="tab-panel">
+    <div class="card">
+      <h2>自我投資 → 變現 總覽</h2>
+      <p class="hint">統計「學習課程、買書、商會、社群」這幾類支出，是否已轉化為實際收入或機會。</p>
+      <div class="stat-grid" id="conversionStatGrid"></div>
+    </div>
+    <div class="card">
+      <h2>自我投資支出明細</h2>
+      <div class="table-wrap">
+        <table id="conversionTable">
+          <thead><tr><th>日期</th><th>類別</th><th>支出金額</th><th>備註</th><th>已變現</th><th>變現金額</th><th>變現日期</th><th>變現說明</th><th>投資報酬率</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Investment -->
+  <section id="tab-investment" class="tab-panel">
+    <div class="card">
+      <h2>新增投資</h2>
+      <form id="investmentForm" class="entry-form">
+        <input type="hidden" name="id">
+        <label>日期<input type="date" name="date" required></label>
+        <label>項目名稱<input type="text" name="name" required placeholder="例如：0050"></label>
+        <label>類型
+          <select name="type" required></select>
+        </label>
+        <label>投入成本<input type="number" name="principal" min="0" step="1" required placeholder="0"></label>
+        <label>目前市值<input type="number" name="currentValue" min="0" step="1" required placeholder="0"></label>
+        <label class="grow">備註<input type="text" name="note" placeholder="例如：長期定期定額"></label>
+        <button type="submit" class="btn-primary">新增</button>
+        <button type="button" class="btn-ghost cancel-edit" hidden>取消編輯</button>
+      </form>
+    </div>
+    <div class="card">
+      <h2>投資組合明細</h2>
+      <div class="table-wrap">
+        <table id="investmentTable">
+          <thead><tr><th>日期</th><th>項目</th><th>類型</th><th>投入成本</th><th>目前市值</th><th>損益</th><th>報酬率</th><th>備註</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<div id="tooltip" class="tooltip" hidden></div>
+
+<script src="app.js"></script>
+</body>
+</html>
