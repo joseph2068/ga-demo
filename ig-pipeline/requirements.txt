@@ -1,0 +1,9 @@
+# 下載
+yt-dlp>=2025.1.1
+
+# 逐字稿（transcribe 步驟才需要）
+faster-whisper>=1.0.0
+
+# YouTube 備份（upload 步驟才需要，不做備份可以不裝）
+google-api-python-client>=2.100.0
+google-auth-oauthlib>=1.2.0

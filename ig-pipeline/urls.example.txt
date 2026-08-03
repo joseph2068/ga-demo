@@ -1,0 +1,7 @@
+# 一行一個 IG 貼文／Reel 網址，# 之後是註解
+# yt-dlp 的 instagram:user 抽取器目前是壞的，沒辦法只給帳號就自動列出全部影片，
+# 所以這份清單要自己蒐集（做法見 README「怎麼蒐集網址」）。
+
+https://www.instagram.com/reel/XXXXXXXXXXX/
+https://www.instagram.com/reel/YYYYYYYYYYY/
+https://www.instagram.com/p/ZZZZZZZZZZZ/

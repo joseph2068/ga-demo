@@ -1,0 +1,11 @@
+# 下載的影片與中間產物
+work/
+notebooklm/
+
+# 自己的網址清單（範例檔 urls.example.txt 有進版控）
+urls.txt
+
+# 憑證，絕對不要 commit
+cookies.txt
+client_secrets.json
+youtube_token.json
