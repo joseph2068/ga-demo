@@ -1,0 +1,1038 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>扶輪信件分類台</title>
+<meta name="description" content="把 Gmail 每天的信自動抓下來，依地區活動、社長秘書、RI、財務分類，可一鍵寫回 Gmail 標籤。">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#F6F4EF" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#14161A" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%AC%3C/text%3E%3C/svg%3E">
+<style>
+/* ============================================================
+   扶輪信件分類台
+   Tokens first；元件只透過 token 取色，light / dark 各自成立。
+   ============================================================ */
+:root{
+  --paper:#F6F4EF;
+  --surface:#FFFFFF;
+  --surface-2:#EFEDE6;
+  --rule:#DFDBD1;
+  --rule-faint:#EAE7DF;
+  --ink:#1B1D21;
+  --ink-2:#4A4F57;
+  --ink-3:#7C828C;
+  --accent:#17458F;      /* Rotary royal blue */
+  --accent-soft:#E7EDF8;
+  --gold:#C98A0B;        /* Rotary gold, 壓暗到可讀 */
+  --gold-soft:#FBF0D8;
+  --danger:#B3261E;
+  --ok:#1F6D45;
+  --c-district:#1F6D45;
+  --c-district-bg:#E4F1E9;
+  --c-officer:#7A3EA1;
+  --c-officer-bg:#F0E7F7;
+  --c-ri:#17458F;
+  --c-ri-bg:#E7EDF8;
+  --c-finance:#B26A00;
+  --c-finance-bg:#FBEEDA;
+  --c-other:#6B7280;
+  --c-other-bg:#ECEDEF;
+  --shadow:0 1px 2px rgba(20,22,26,.06), 0 8px 24px rgba(20,22,26,.06);
+  --radius:14px;
+  --radius-sm:9px;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --paper:#14161A;
+    --surface:#1C1F25;
+    --surface-2:#22262D;
+    --rule:#31363F;
+    --rule-faint:#272B32;
+    --ink:#EDEEF1;
+    --ink-2:#B6BCC6;
+    --ink-3:#858C97;
+    --accent:#8AB0F0;
+    --accent-soft:#1E2A3F;
+    --gold:#E2AE4B;
+    --gold-soft:#332A16;
+    --danger:#F2837B;
+    --ok:#6FCF9B;
+    --c-district:#6FCF9B;
+    --c-district-bg:#1A2C22;
+    --c-officer:#C7A0E8;
+    --c-officer-bg:#2A2033;
+    --c-ri:#8AB0F0;
+    --c-ri-bg:#1E2A3F;
+    --c-finance:#E9B366;
+    --c-finance-bg:#33270F;
+    --c-other:#9AA1AC;
+    --c-other-bg:#262A31;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.28);
+  }
+}
+*{box-sizing:border-box}
+html{background:var(--paper);-webkit-text-size-adjust:100%}
+body{
+  margin:0;background:var(--paper);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+  font-size:15px;line-height:1.6;
+  padding:0 0 max(32px,env(safe-area-inset-bottom));
+}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:var(--accent)}
+
+.wrap{max-width:960px;margin:0 auto;padding:0 16px}
+
+/* ---------- header ---------- */
+header{
+  position:sticky;top:0;z-index:30;
+  background:color-mix(in srgb,var(--paper) 88%, transparent);
+  backdrop-filter:saturate(1.4) blur(10px);
+  border-bottom:1px solid var(--rule-faint);
+}
+.hd{display:flex;align-items:center;gap:12px;padding:12px 0}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.mark{
+  width:34px;height:34px;border-radius:10px;flex:none;
+  background:linear-gradient(140deg,var(--accent),color-mix(in srgb,var(--accent) 55%, var(--gold)));
+  color:#fff;display:grid;place-items:center;font-size:17px;
+}
+.brand h1{margin:0;font-size:17px;font-weight:650;letter-spacing:-.01em;white-space:nowrap}
+.brand .sub{margin:0;font-size:12px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hd .spacer{flex:1}
+
+/* ---------- buttons ---------- */
+.btn{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:8px 14px;border-radius:999px;border:1px solid var(--rule);
+  background:var(--surface);cursor:pointer;font-size:14px;font-weight:550;
+  transition:background .12s ease,border-color .12s ease,transform .08s ease;
+  white-space:nowrap;
+}
+.btn:hover{background:var(--surface-2)}
+.btn:active{transform:translateY(1px)}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{filter:brightness(1.07)}
+@media (prefers-color-scheme:dark){.btn.primary{color:#0E1522}}
+.btn.ghost{background:transparent}
+.btn.sm{padding:5px 11px;font-size:13px}
+.btn .spin{
+  width:13px;height:13px;border-radius:50%;flex:none;
+  border:2px solid currentColor;border-right-color:transparent;
+  animation:spin .7s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ---------- toolbar ---------- */
+.bar{
+  display:flex;flex-wrap:wrap;gap:8px;align-items:center;
+  padding:12px 0 4px;
+}
+.field{
+  display:flex;align-items:center;gap:6px;
+  background:var(--surface);border:1px solid var(--rule);
+  border-radius:999px;padding:6px 12px;font-size:14px;
+}
+.field label{color:var(--ink-3);font-size:13px}
+.field select,.field input{border:0;background:transparent;outline:none;padding:2px 0;min-width:0}
+.field select{cursor:pointer}
+#q{width:190px}
+.bar .grow{flex:1;min-width:8px}
+
+/* ---------- stat tiles ---------- */
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:10px;margin:14px 0 6px}
+.tile{
+  text-align:left;cursor:pointer;
+  background:var(--surface);border:1px solid var(--rule);border-radius:var(--radius);
+  padding:11px 13px;transition:border-color .12s ease,box-shadow .12s ease;
+}
+.tile:hover{border-color:color-mix(in srgb,var(--accent) 45%,var(--rule))}
+.tile[aria-pressed="true"]{border-color:var(--tone,var(--accent));box-shadow:inset 0 0 0 1px var(--tone,var(--accent))}
+.tile .n{font-size:24px;font-weight:680;letter-spacing:-.02em;line-height:1.15;font-variant-numeric:tabular-nums}
+.tile .lbl{font-size:12.5px;color:var(--ink-2);display:flex;align-items:center;gap:5px}
+.tile .dot{width:8px;height:8px;border-radius:50%;background:var(--tone,var(--ink-3));flex:none}
+
+/* ---------- list ---------- */
+.daybar{
+  display:flex;align-items:center;gap:10px;
+  margin:20px 0 8px;font-size:12.5px;color:var(--ink-3);font-weight:600;letter-spacing:.02em;
+}
+.daybar::after{content:"";flex:1;height:1px;background:var(--rule-faint)}
+
+.mail{
+  display:block;text-decoration:none;color:inherit;
+  background:var(--surface);border:1px solid var(--rule);border-radius:var(--radius);
+  padding:13px 15px;margin-bottom:9px;
+  transition:border-color .12s ease,box-shadow .12s ease,transform .08s ease;
+}
+.mail:hover{border-color:color-mix(in srgb,var(--accent) 40%,var(--rule));box-shadow:var(--shadow)}
+.mail.unread{border-left:3px solid var(--accent);padding-left:13px}
+.mail .top{display:flex;align-items:baseline;gap:9px}
+.mail .from{font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:56%}
+.mail .time{margin-left:auto;font-size:12px;color:var(--ink-3);white-space:nowrap;font-variant-numeric:tabular-nums}
+.mail .subj{font-size:15px;font-weight:560;margin:3px 0 2px;overflow-wrap:anywhere}
+.mail .snip{font-size:13.5px;color:var(--ink-2);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.tag{
+  font-size:11.5px;font-weight:600;padding:2px 9px;border-radius:999px;
+  background:var(--tone-bg,var(--c-other-bg));color:var(--tone,var(--c-other));
+  border:1px solid color-mix(in srgb,var(--tone,var(--c-other)) 22%, transparent);
+}
+.tag.faint{opacity:.72;font-weight:500}
+.tag .why{font-weight:400;opacity:.8}
+
+.empty{
+  text-align:center;padding:56px 20px;color:var(--ink-3);
+  border:1px dashed var(--rule);border-radius:var(--radius);margin-top:14px;
+}
+.empty .big{font-size:30px;margin-bottom:8px}
+.empty p{margin:6px 0}
+
+/* ---------- notices ---------- */
+.notice{
+  border:1px solid var(--rule);background:var(--surface);border-radius:var(--radius);
+  padding:14px 16px;margin:14px 0;box-shadow:var(--shadow);
+}
+.notice.warn{border-color:color-mix(in srgb,var(--gold) 45%,var(--rule));background:var(--gold-soft)}
+.notice.err{border-color:color-mix(in srgb,var(--danger) 45%,var(--rule))}
+.notice h3{margin:0 0 6px;font-size:15px}
+.notice p{margin:5px 0;font-size:13.5px;color:var(--ink-2)}
+.notice ol{margin:6px 0;padding-left:20px;font-size:13.5px;color:var(--ink-2)}
+.notice li{margin:3px 0}
+.notice code{
+  background:var(--surface-2);padding:1px 6px;border-radius:5px;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;overflow-wrap:anywhere;
+}
+
+.status{font-size:12.5px;color:var(--ink-3);padding:10px 0 0;min-height:20px}
+.status b{color:var(--ink-2);font-weight:600}
+
+/* ---------- dialog ---------- */
+dialog{
+  border:1px solid var(--rule);border-radius:var(--radius);padding:0;
+  background:var(--surface);color:var(--ink);
+  width:min(620px,calc(100vw - 28px));max-height:86vh;box-shadow:var(--shadow);
+}
+dialog::backdrop{background:rgba(12,14,18,.44);backdrop-filter:blur(2px)}
+.dlg-hd{
+  display:flex;align-items:center;gap:10px;padding:14px 18px;
+  border-bottom:1px solid var(--rule-faint);position:sticky;top:0;background:var(--surface);
+}
+.dlg-hd h2{margin:0;font-size:16px;font-weight:640}
+.dlg-bd{padding:16px 18px;overflow:auto}
+.dlg-ft{
+  display:flex;gap:8px;justify-content:flex-end;padding:12px 18px;
+  border-top:1px solid var(--rule-faint);position:sticky;bottom:0;background:var(--surface);
+}
+.row{margin-bottom:16px}
+.row > label{display:block;font-size:13px;font-weight:600;margin-bottom:5px}
+.row .hint{font-size:12.5px;color:var(--ink-3);margin:4px 0 0}
+.row input[type=text],.row input[type=number],.row textarea,.row select{
+  width:100%;padding:9px 11px;border:1px solid var(--rule);border-radius:var(--radius-sm);
+  background:var(--paper);outline:none;
+}
+.row input:focus,.row textarea:focus,.row select:focus{border-color:var(--accent)}
+.row textarea{min-height:66px;resize:vertical;line-height:1.5;font-size:13.5px}
+.check{display:flex;align-items:flex-start;gap:9px;font-size:13.5px;cursor:pointer}
+.check input{margin-top:3px;flex:none;width:16px;height:16px;accent-color:var(--accent)}
+.kwhd{display:flex;align-items:center;gap:7px;margin-bottom:5px}
+.kwhd .dot{width:9px;height:9px;border-radius:50%;background:var(--tone)}
+.kwhd span{font-size:13px;font-weight:600}
+hr.sep{border:0;border-top:1px solid var(--rule-faint);margin:18px 0}
+
+@media (max-width:640px){
+  .brand .sub{display:none}
+  #q{width:120px}
+  .mail .from{max-width:44%}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap hd">
+    <div class="brand">
+      <div class="mark">📬</div>
+      <div style="min-width:0">
+        <h1>扶輪信件分類台</h1>
+        <p class="sub" id="acct">尚未連線</p>
+      </div>
+    </div>
+    <div class="spacer"></div>
+    <button class="btn ghost sm" id="btnSettings" title="設定">⚙️ 設定</button>
+    <button class="btn primary" id="btnRefresh">↻ 更新</button>
+  </div>
+</header>
+
+<main class="wrap">
+  <div id="notices"></div>
+
+  <div class="bar" id="toolbar" hidden>
+    <div class="field">
+      <label for="range">期間</label>
+      <select id="range">
+        <option value="0">今天</option>
+        <option value="1">昨天到今天</option>
+        <option value="3" selected>近 3 天</option>
+        <option value="7">近 7 天</option>
+        <option value="14">近 14 天</option>
+        <option value="30">近 30 天</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="q">搜尋</label>
+      <input id="q" type="search" placeholder="主旨、寄件者、內容" autocomplete="off">
+    </div>
+    <div class="grow"></div>
+    <button class="btn ghost sm" id="btnLabel" hidden title="把分類結果建成 Gmail 標籤">🏷 寫回 Gmail</button>
+    <button class="btn ghost sm" id="btnCsv">⤓ CSV</button>
+  </div>
+
+  <div class="tiles" id="tiles" hidden></div>
+  <div class="status" id="status"></div>
+  <div id="list"></div>
+</main>
+
+<!-- ============ 設定 ============ -->
+<dialog id="dlg">
+  <form method="dialog" class="dlg-hd">
+    <h2>設定</h2>
+    <div style="flex:1"></div>
+    <button class="btn ghost sm" value="cancel">關閉</button>
+  </form>
+  <div class="dlg-bd">
+    <div class="row">
+      <label for="cid">Google OAuth 用戶端 ID</label>
+      <input id="cid" type="text" placeholder="xxxxxxxx.apps.googleusercontent.com" spellcheck="false" autocomplete="off">
+      <p class="hint">在 Google Cloud Console 建立「網頁應用程式」憑證，並把這個網站的網址加進「已授權的 JavaScript 來源」。設定步驟見專案的 README。</p>
+    </div>
+    <div class="row">
+      <label for="hint">預設 Gmail 帳號</label>
+      <input id="hint" type="text" placeholder="you@gmail.com" spellcheck="false" autocomplete="off">
+      <p class="hint">登入時預先帶入的帳號，避免選錯身分。</p>
+    </div>
+    <div class="row">
+      <label for="cap">單次最多抓取封數</label>
+      <input id="cap" type="number" min="20" max="1000" step="20">
+    </div>
+    <div class="row">
+      <label class="check"><input type="checkbox" id="inbox"><span>只看收件匣（勾掉則含已封存信件）</span></label>
+    </div>
+    <div class="row">
+      <label class="check"><input type="checkbox" id="nopromo"><span>排除「促銷」與「社交」分頁的信</span></label>
+    </div>
+    <div class="row">
+      <label for="extra">額外 Gmail 查詢條件</label>
+      <input id="extra" type="text" placeholder="例：from:rotary.org OR -from:noreply@" spellcheck="false" autocomplete="off">
+      <p class="hint">會直接併入 Gmail 搜尋語法。</p>
+    </div>
+    <div class="row">
+      <label class="check"><input type="checkbox" id="canwrite"><span>允許寫回 Gmail 標籤</span></label>
+      <p class="hint">勾選後會改用可寫入的權限範圍，並在工具列出現「寫回 Gmail」按鈕，把分類建成 <code>扶輪/地區活動</code> 這類標籤。變更後需要重新登入授權。</p>
+    </div>
+
+    <hr class="sep">
+    <h3 style="margin:0 0 4px;font-size:14px">分類關鍵字</h3>
+    <p class="hint" style="margin:0 0 14px">一行一個關鍵字，或用逗號分隔。主旨命中權重最高，其次寄件者，再來是內文摘要。</p>
+    <div id="kwEditor"></div>
+    <button class="btn ghost sm" id="btnResetKw" type="button">↺ 還原預設關鍵字</button>
+  </div>
+  <div class="dlg-ft">
+    <button class="btn ghost" id="btnSignOut" type="button">登出</button>
+    <div style="flex:1"></div>
+    <button class="btn primary" id="btnSave" type="button">儲存並更新</button>
+  </div>
+</dialog>
+
+<script src="config.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer
+        onerror="window.__gisFailed=true"></script>
+<script>
+"use strict";
+/* ==========================================================================
+   扶輪信件分類台
+   純前端：Google Identity Services 取 access token → 直接打 Gmail REST API。
+   沒有後端、沒有金鑰外流；token 只留在這台瀏覽器的 localStorage。
+   ========================================================================== */
+
+const SCOPE_READ  = "https://www.googleapis.com/auth/gmail.readonly";
+const SCOPE_WRITE = "https://www.googleapis.com/auth/gmail.modify";
+const LABEL_PREFIX = "扶輪";
+const LS = { cfg:"rm.cfg", kw:"rm.kw", tok:"rm.tok" };
+
+/* ---------- 預設分類 ---------- */
+const DEFAULT_CATS = [
+  { id:"district", name:"地區活動", tone:"--c-district",
+    keywords:["地區","3481","3482","3490","3501","3521","3522","3523","地區年會","地區大會","地區訓練","地區講習","聯合例會","分區","助理總監","總監","DG","DGE","DGN","PETS","講習會","研習會","高峰會","論壇","聯誼會","爐邊會","授證","扶輪日","公益活動","服務計畫","報名表","活動通知"] },
+  { id:"officer", name:"社長秘書", tone:"--c-officer",
+    keywords:["社長","秘書","副社長","社長當選人","前社長","社務","理事會","理監事","例會","開會通知","會議紀錄","議程","幹部","職員","糾察","司儀","交接","授證典禮","出席率","點名","社員","入社","新社員","社員大會","週報","社刊"] },
+  { id:"ri", name:"RI 國際扶輪", tone:"--c-ri",
+    keywords:["RI","Rotary International","國際扶輪","扶輪基金","Rotary Foundation","TRF","My Rotary","rotary.org","保羅哈理斯","保羅‧哈理斯","PHF","巨額捐獻","國際年會","Rotary Club Central","扶輪月刊","扶輪之友","根除小兒麻痺","End Polio","全球獎助金","地區獎助金","扶輪社員","Rotarian"] },
+  { id:"finance", name:"財務", tone:"--c-finance",
+    keywords:["財務","社費","會費","繳費","繳款","收據","發票","帳單","匯款","轉帳","匯入","捐款","捐獻","認捐","預算","決算","出納","報帳","請款","支出","收入","餘額","對帳","財報","費用","贊助","繳交","餐費"] },
+];
+const OTHER = { id:"other", name:"其他", tone:"--c-other" };
+
+const DEFAULT_CFG = {
+  clientId:"", hint:"", cap:200, range:"3",
+  inbox:false, nopromo:true, extra:"", canwrite:false,
+};
+
+/* ---------- 狀態 ---------- */
+let cfg   = loadCfg();
+let cats  = loadKw();
+let token = loadTok();
+let mails = [];
+let filter = null;          // 目前選取的分類 id
+let tokenClient = null;
+let busy = false;
+let lastRun = 0;            // 上次成功更新的時間，給自動重整判斷用
+
+const $ = s => document.querySelector(s);
+const el = {
+  acct:$("#acct"), notices:$("#notices"), toolbar:$("#toolbar"), tiles:$("#tiles"),
+  list:$("#list"), status:$("#status"), refresh:$("#btnRefresh"), dlg:$("#dlg"),
+  range:$("#range"), q:$("#q"), csv:$("#btnCsv"), label:$("#btnLabel"),
+};
+
+/* ==========================================================================
+   設定存取
+   ========================================================================== */
+function loadCfg(){
+  const baked = (window.ROTARY_MAIL_CONFIG || {});
+  let saved = {};
+  try{ saved = JSON.parse(localStorage.getItem(LS.cfg) || "{}"); }catch{}
+  const merged = Object.assign({}, DEFAULT_CFG, baked, saved);
+  // 部署時寫死的 clientId 只在使用者沒自己填時生效
+  if(!saved.clientId && baked.clientId) merged.clientId = baked.clientId;
+  if(!saved.hint && baked.hint) merged.hint = baked.hint;
+  return merged;
+}
+function saveCfg(){ localStorage.setItem(LS.cfg, JSON.stringify(cfg)); }
+
+function loadKw(){
+  let saved = null;
+  try{ saved = JSON.parse(localStorage.getItem(LS.kw) || "null"); }catch{}
+  return DEFAULT_CATS.map(c => {
+    const hit = saved && saved.find(s => s.id === c.id);
+    return Object.assign({}, c, hit ? { keywords: hit.keywords } : null);
+  });
+}
+function saveKw(){
+  localStorage.setItem(LS.kw, JSON.stringify(cats.map(c => ({ id:c.id, keywords:c.keywords }))));
+}
+
+function loadTok(){
+  try{
+    const t = JSON.parse(localStorage.getItem(LS.tok) || "null");
+    if(t && t.exp > Date.now() + 60_000) return t;
+  }catch{}
+  return null;
+}
+function saveTok(t){ token = t; localStorage.setItem(LS.tok, JSON.stringify(t)); }
+function clearTok(){ token = null; localStorage.removeItem(LS.tok); }
+
+const wantScope = () => cfg.canwrite ? SCOPE_WRITE : SCOPE_READ;
+const tokenUsable = () =>
+  token && token.exp > Date.now() + 60_000 && token.scope === wantScope();
+
+/* ==========================================================================
+   訊息區
+   ========================================================================== */
+function notice(kind, title, bodyHtml){
+  el.notices.innerHTML =
+    `<div class="notice ${kind}"><h3>${title}</h3>${bodyHtml}</div>`;
+}
+function clearNotice(){ el.notices.innerHTML = ""; }
+function setStatus(html){ el.status.innerHTML = html; }
+function esc(s){
+  return String(s ?? "").replace(/[&<>"']/g, m =>
+    ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[m]));
+}
+
+function needSetup(){
+  notice("warn", "還差一步：填入 Google OAuth 用戶端 ID", `
+    <p>這個頁面是純前端的，要先有一組你自己的 OAuth 用戶端 ID 才能連上 Gmail。</p>
+    <ol>
+      <li>到 Google Cloud Console 建立專案，啟用 <b>Gmail API</b>。</li>
+      <li>OAuth 同意畫面選「外部」，把要用的 Gmail 帳號加進<b>測試使用者</b>。</li>
+      <li>建立「OAuth 用戶端 ID → 網頁應用程式」，在<b>已授權的 JavaScript 來源</b>填入 <code>${esc(location.origin)}</code>。</li>
+      <li>把產生的用戶端 ID 貼進<b>設定</b>。</li>
+    </ol>
+    <p><button class="btn primary sm" onclick="openSettings()">開啟設定</button></p>`);
+}
+
+/* ==========================================================================
+   OAuth
+   ========================================================================== */
+function gisReady(){
+  return !!(window.google && google.accounts && google.accounts.oauth2);
+}
+
+function ensureTokenClient(){
+  if(tokenClient && tokenClient.__scope === wantScope()) return tokenClient;
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: cfg.clientId,
+    scope: wantScope(),
+    prompt: "",
+    callback: () => {},          // 每次 requestAccessToken 前覆寫
+  });
+  tokenClient.__scope = wantScope();
+  return tokenClient;
+}
+
+/**
+ * 取 access token。interactive=false 時走靜默續期（已授權過才會成功）。
+ */
+function getToken({ interactive }){
+  return new Promise((resolve, reject) => {
+    const client = ensureTokenClient();
+    client.callback = resp => {
+      if(resp && resp.access_token){
+        saveTok({
+          access_token: resp.access_token,
+          exp: Date.now() + (Number(resp.expires_in || 3600) - 60) * 1000,
+          scope: wantScope(),
+        });
+        resolve(token);
+      }else{
+        reject(new Error(resp && resp.error ? resp.error : "no_token"));
+      }
+    };
+    client.error_callback = err => reject(new Error((err && err.type) || "popup_failed"));
+    try{
+      client.requestAccessToken({
+        prompt: interactive ? "consent" : "",
+        hint: cfg.hint || undefined,
+      });
+    }catch(e){ reject(e); }
+  });
+}
+
+function signOut(){
+  if(token && gisReady()){
+    try{ google.accounts.oauth2.revoke(token.access_token, () => {}); }catch{}
+  }
+  clearTok();
+  mails = [];
+  el.acct.textContent = "尚未連線";
+  el.toolbar.hidden = true;
+  el.tiles.hidden = true;
+  el.list.innerHTML = "";
+  setStatus("");
+  notice("", "已登出", "<p>按「更新」可重新登入 Gmail。</p>");
+}
+
+/* ==========================================================================
+   Gmail API
+   ========================================================================== */
+async function api(path, opts = {}){
+  const res = await fetch("https://gmail.googleapis.com/gmail/v1/users/me" + path, {
+    ...opts,
+    headers: {
+      Authorization: "Bearer " + token.access_token,
+      ...(opts.body ? { "Content-Type": "application/json" } : {}),
+      ...(opts.headers || {}),
+    },
+  });
+  if(res.status === 401){ clearTok(); throw new Error("unauthorized"); }
+  if(!res.ok){
+    let detail = "";
+    try{ detail = (await res.json()).error?.message || ""; }catch{}
+    throw new Error(`Gmail API ${res.status}${detail ? "：" + detail : ""}`);
+  }
+  return res.json();
+}
+
+function ymd(d){
+  return d.getFullYear() + "/" + String(d.getMonth() + 1).padStart(2, "0") + "/" +
+         String(d.getDate()).padStart(2, "0");
+}
+
+function buildQuery(){
+  const days = Number(el.range.value);
+  const from = new Date();
+  from.setHours(0, 0, 0, 0);
+  from.setDate(from.getDate() - days);
+  const parts = [`after:${ymd(from)}`];
+  if(cfg.inbox) parts.push("in:inbox");
+  if(cfg.nopromo) parts.push("-category:promotions", "-category:social");
+  if(cfg.extra.trim()) parts.push(cfg.extra.trim());
+  return parts.join(" ");
+}
+
+/** 併發受控的 map，避免一次噴幾百個請求被 Gmail 擋掉。 */
+async function pool(items, limit, fn){
+  const out = new Array(items.length);
+  let i = 0;
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, async () => {
+    while(i < items.length){
+      const idx = i++;
+      out[idx] = await fn(items[idx], idx);
+    }
+  }));
+  return out;
+}
+
+async function fetchMails(){
+  const q = buildQuery();
+  const cap = Math.max(20, Math.min(1000, Number(cfg.cap) || 200));
+
+  // 1) 列出訊息 ID
+  const ids = [];
+  let pageToken = "";
+  while(ids.length < cap){
+    const page = await api("/messages?" + new URLSearchParams({
+      q,
+      maxResults: String(Math.min(100, cap - ids.length)),
+      ...(pageToken ? { pageToken } : {}),
+    }));
+    (page.messages || []).forEach(m => ids.push(m.id));
+    pageToken = page.nextPageToken || "";
+    if(!pageToken) break;
+    setStatus(`讀取清單中… 已找到 <b>${ids.length}</b> 封`);
+  }
+  if(!ids.length) return [];
+
+  // 2) 逐封抓 metadata（只要標頭與摘要，不下載信件內容）
+  let done = 0;
+  const raw = await pool(ids, 8, async id => {
+    const m = await api(`/messages/${id}?` + new URLSearchParams([
+      ["format", "metadata"],
+      ["metadataHeaders", "Subject"],
+      ["metadataHeaders", "From"],
+      ["metadataHeaders", "To"],
+      ["metadataHeaders", "Date"],
+      ["metadataHeaders", "List-Id"],
+    ]));
+    done++;
+    if(done % 10 === 0 || done === ids.length){
+      setStatus(`讀取信件內容… <b>${done}</b> / ${ids.length}`);
+    }
+    return m;
+  });
+
+  return raw.map(normalize).sort((a, b) => b.ts - a.ts);
+}
+
+function header(msg, name){
+  const h = (msg.payload && msg.payload.headers || [])
+    .find(x => x.name.toLowerCase() === name.toLowerCase());
+  return h ? h.value : "";
+}
+
+function decodeEntities(s){
+  const t = document.createElement("textarea");
+  t.innerHTML = s;
+  return t.value;
+}
+
+function normalize(m){
+  const from = header(m, "From");
+  const nameMatch = from.match(/^\s*"?([^"<]*?)"?\s*<([^>]+)>/);
+  return {
+    id: m.id,
+    threadId: m.threadId,
+    ts: Number(m.internalDate || 0),
+    subject: decodeEntities(header(m, "Subject")) || "（無主旨）",
+    fromName: (nameMatch ? nameMatch[1].trim() : from.split("<")[0].trim()) || from,
+    fromAddr: (nameMatch ? nameMatch[2] : from).trim().toLowerCase(),
+    listId: header(m, "List-Id"),
+    snippet: decodeEntities(m.snippet || ""),
+    unread: (m.labelIds || []).includes("UNREAD"),
+    labelIds: m.labelIds || [],
+  };
+}
+
+/* ==========================================================================
+   分類
+   ========================================================================== */
+const isAscii = s => /^[\x20-\x7E]+$/.test(s);
+
+function makeMatcher(kw){
+  const k = kw.trim();
+  if(!k) return null;
+  if(isAscii(k)){
+    // 英數關鍵字要卡邊界，否則 "RI" 會在 "PRICE" 裡命中
+    const esc = k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const re = new RegExp(`(^|[^A-Za-z0-9])${esc}([^A-Za-z0-9]|$)`, "i");
+    return t => re.test(t);
+  }
+  return t => t.includes(k);
+}
+
+// 關鍵字編譯結果快取，改設定時才重建
+let matchers = null;
+function compile(){
+  matchers = cats.map(c => ({
+    id: c.id, name: c.name, tone: c.tone,
+    tests: c.keywords.map(k => ({ kw: k, fn: makeMatcher(k) })).filter(t => t.fn),
+  }));
+}
+
+function classify(m){
+  if(!matchers) compile();
+  const subject = m.subject;
+  const sender  = m.fromName + " " + m.fromAddr + " " + m.listId;
+  const body    = m.snippet;
+  const scored = [];
+
+  for(const c of matchers){
+    let score = 0;
+    const hits = [];
+    for(const t of c.tests){
+      let s = 0;
+      if(t.fn(subject)) s += 3;
+      if(t.fn(sender))  s += 2;
+      if(t.fn(body))    s += 1;
+      if(s > 0){ score += s; if(hits.length < 3) hits.push(t.kw); }
+    }
+    if(score > 0) scored.push({ id:c.id, name:c.name, tone:c.tone, score, hits });
+  }
+
+  scored.sort((a, b) => b.score - a.score);
+  if(!scored.length){
+    return { primary:{ id:OTHER.id, name:OTHER.name, tone:OTHER.tone, hits:[] }, all:[] };
+  }
+  const top = scored[0];
+  // 分數達到首位一半的其他分類，當作次要標籤一併顯示
+  const secondary = scored.slice(1).filter(s => s.score >= Math.max(2, top.score * 0.5));
+  return { primary: top, all: [top, ...secondary] };
+}
+
+/* ==========================================================================
+   畫面
+   ========================================================================== */
+function catsForDisplay(){
+  return [...cats.map(c => ({ id:c.id, name:c.name, tone:c.tone })),
+          { id:OTHER.id, name:OTHER.name, tone:OTHER.tone }];
+}
+
+function visible(){
+  const kw = el.q.value.trim().toLowerCase();
+  return mails.filter(m => {
+    if(filter && !m.cat.all.some(c => c.id === filter) &&
+       !(filter === OTHER.id && m.cat.primary.id === OTHER.id)) return false;
+    if(kw){
+      const hay = (m.subject + " " + m.fromName + " " + m.fromAddr + " " + m.snippet).toLowerCase();
+      if(!hay.includes(kw)) return false;
+    }
+    return true;
+  });
+}
+
+function renderTiles(){
+  const counts = Object.fromEntries(catsForDisplay().map(c => [c.id, 0]));
+  mails.forEach(m => {
+    const seen = new Set(m.cat.all.map(c => c.id));
+    if(!seen.size) seen.add(OTHER.id);
+    seen.forEach(id => { if(id in counts) counts[id]++; });
+  });
+
+  const tile = (id, name, tone, n) => `
+    <button class="tile" data-cat="${id}" aria-pressed="${filter === id}" style="--tone:var(${tone})">
+      <div class="n">${n}</div>
+      <div class="lbl"><span class="dot"></span>${esc(name)}</div>
+    </button>`;
+
+  el.tiles.innerHTML =
+    `<button class="tile" data-cat="" aria-pressed="${filter === null}" style="--tone:var(--accent)">
+       <div class="n">${mails.length}</div>
+       <div class="lbl"><span class="dot"></span>全部</div>
+     </button>` +
+    catsForDisplay().map(c => tile(c.id, c.name, c.tone, counts[c.id])).join("");
+  el.tiles.hidden = false;
+
+  el.tiles.querySelectorAll(".tile").forEach(b => {
+    b.onclick = () => {
+      const v = b.dataset.cat || null;
+      filter = (filter === v) ? null : v;
+      renderTiles();
+      renderList();
+    };
+  });
+}
+
+function dayLabel(ts){
+  const d = new Date(ts), now = new Date();
+  const same = (a, b) => a.toDateString() === b.toDateString();
+  const y = new Date(now); y.setDate(y.getDate() - 1);
+  if(same(d, now)) return "今天";
+  if(same(d, y))   return "昨天";
+  return d.toLocaleDateString("zh-TW", { month:"long", day:"numeric", weekday:"short" });
+}
+
+function gmailLink(m){
+  const u = cfg.hint ? `?authuser=${encodeURIComponent(cfg.hint)}` : "";
+  return `https://mail.google.com/mail/u/0/${u}#all/${m.threadId}`;
+}
+
+function renderList(){
+  const items = visible();
+  if(!items.length){
+    el.list.innerHTML = `<div class="empty"><div class="big">🗂</div>
+      <p>${mails.length ? "這個條件下沒有信件。" : "這段期間沒有抓到信件。"}</p>
+      <p>${mails.length ? "換個分類或清掉搜尋字。" : "試著把期間拉長，或到設定放寬查詢條件。"}</p></div>`;
+    return;
+  }
+
+  let html = "", lastDay = "";
+  for(const m of items){
+    const day = dayLabel(m.ts);
+    if(day !== lastDay){ html += `<div class="daybar">${esc(day)}</div>`; lastDay = day; }
+    const tags = (m.cat.all.length ? m.cat.all : [m.cat.primary]).map((c, i) => `
+      <span class="tag${i ? " faint" : ""}" style="--tone:var(${c.tone});--tone-bg:var(${c.tone}-bg)">
+        ${esc(c.name)}${c.hits && c.hits.length ? ` <span class="why">· ${esc(c.hits.join("、"))}</span>` : ""}
+      </span>`).join("");
+    html += `
+      <a class="mail${m.unread ? " unread" : ""}" href="${esc(gmailLink(m))}" target="_blank" rel="noopener">
+        <div class="top">
+          <span class="from">${esc(m.fromName)}</span>
+          <span class="time">${new Date(m.ts).toLocaleTimeString("zh-TW", { hour:"2-digit", minute:"2-digit", hour12:false })}</span>
+        </div>
+        <div class="subj">${esc(m.subject)}</div>
+        <div class="snip">${esc(m.snippet)}</div>
+        <div class="tags">${tags}</div>
+      </a>`;
+  }
+  el.list.innerHTML = html;
+}
+
+/* ==========================================================================
+   主流程
+   ========================================================================== */
+async function refresh({ interactive = false } = {}){
+  if(busy) return;
+
+  if(!cfg.clientId){ needSetup(); return; }
+  if(window.__gisFailed || !gisReady()){
+    // GIS 可能還在載入中，等一下再判定
+    await new Promise(r => setTimeout(r, 700));
+    if(!gisReady()){
+      notice("err", "載入 Google 登入元件失敗",
+        "<p>連不上 <code>accounts.google.com</code>。請檢查網路或擋廣告的擴充功能，再按一次更新。</p>");
+      return;
+    }
+  }
+
+  busy = true;
+  el.refresh.disabled = true;
+  el.refresh.innerHTML = `<span class="spin"></span> 更新中`;
+
+  try{
+    if(!tokenUsable()){
+      try{
+        await getToken({ interactive:false });
+      }catch{
+        if(!interactive){
+          notice("", "需要登入 Gmail",
+            `<p>第一次使用（或授權已過期）要先登入一次。</p>
+             <p><button class="btn primary sm" onclick="refresh({interactive:true})">登入 Gmail</button></p>`);
+          return;
+        }
+        await getToken({ interactive:true });
+      }
+    }
+
+    clearNotice();
+    setStatus("讀取清單中…");
+    el.acct.textContent = cfg.hint ? cfg.hint : "已連線 Gmail";
+    el.toolbar.hidden = false;
+    el.label.hidden = !cfg.canwrite;
+
+    const list = await fetchMails();
+    compile();
+    list.forEach(m => { m.cat = classify(m); });
+    mails = list;
+
+    renderTiles();
+    renderList();
+    lastRun = Date.now();
+    setStatus(`共 <b>${mails.length}</b> 封 · 更新於 ${new Date().toLocaleTimeString("zh-TW", { hour12:false })} · 查詢條件 <code>${esc(buildQuery())}</code>`);
+  }catch(e){
+    const msg = String(e && e.message || e);
+    if(msg === "unauthorized"){
+      notice("warn", "授權過期", `<p>請重新登入。</p>
+        <p><button class="btn primary sm" onclick="refresh({interactive:true})">重新登入</button></p>`);
+    }else if(/popup|access_denied|interaction/i.test(msg)){
+      notice("warn", "登入視窗被關掉或被擋住", `<p>請允許這個網站開啟彈出視窗，再試一次。</p>
+        <p><button class="btn primary sm" onclick="refresh({interactive:true})">重新登入</button></p>`);
+    }else{
+      notice("err", "更新失敗", `<p>${esc(msg)}</p>`);
+    }
+    setStatus("");
+  }finally{
+    busy = false;
+    el.refresh.disabled = false;
+    el.refresh.textContent = "↻ 更新";
+  }
+}
+window.refresh = refresh;
+
+/* ==========================================================================
+   寫回 Gmail 標籤
+   ========================================================================== */
+async function pushLabels(){
+  if(!mails.length) return;
+  if(!confirm(`要把目前 ${mails.length} 封信的分類寫回 Gmail 嗎？\n會建立「${LABEL_PREFIX}/分類名稱」標籤並套用到信件上。`)) return;
+
+  el.label.disabled = true;
+  const old = el.label.textContent;
+  el.label.innerHTML = `<span class="spin"></span> 寫入中`;
+  try{
+    const existing = (await api("/labels")).labels || [];
+    const byName = new Map(existing.map(l => [l.name, l.id]));
+
+    const groups = new Map();   // labelName -> [messageId]
+    for(const m of mails){
+      for(const c of (m.cat.all.length ? m.cat.all : [m.cat.primary])){
+        const name = `${LABEL_PREFIX}/${c.name}`;
+        if(!groups.has(name)) groups.set(name, []);
+        groups.get(name).push(m.id);
+      }
+    }
+
+    let n = 0;
+    for(const [name, ids] of groups){
+      let labelId = byName.get(name);
+      if(!labelId){
+        const made = await api("/labels", {
+          method:"POST",
+          body: JSON.stringify({ name, labelListVisibility:"labelShow", messageListVisibility:"show" }),
+        });
+        labelId = made.id;
+        byName.set(name, labelId);
+      }
+      for(let i = 0; i < ids.length; i += 900){
+        await api("/messages/batchModify", {
+          method:"POST",
+          body: JSON.stringify({ ids: ids.slice(i, i + 900), addLabelIds:[labelId] }),
+        });
+      }
+      n += ids.length;
+      setStatus(`寫入標籤中… <b>${name}</b>（${ids.length} 封）`);
+    }
+    setStatus(`已寫回 Gmail：${groups.size} 個標籤、共 <b>${n}</b> 次套用。`);
+  }catch(e){
+    notice("err", "寫回標籤失敗", `<p>${esc(String(e.message || e))}</p>
+      <p>若訊息提到權限不足，請到設定關閉再重新勾選「允許寫回 Gmail 標籤」，重新授權一次。</p>`);
+  }finally{
+    el.label.disabled = false;
+    el.label.textContent = old;
+  }
+}
+
+/* ==========================================================================
+   CSV
+   ========================================================================== */
+function exportCsv(){
+  const rows = visible();
+  if(!rows.length){ alert("目前沒有可匯出的信件。"); return; }
+  const q = s => `"${String(s ?? "").replace(/"/g, '""')}"`;
+  const lines = [["時間","主要分類","所有分類","寄件者","信箱","主旨","摘要","是否未讀"].map(q).join(",")];
+  for(const m of rows){
+    lines.push([
+      new Date(m.ts).toLocaleString("zh-TW", { hour12:false }),
+      m.cat.primary.name,
+      (m.cat.all.length ? m.cat.all : [m.cat.primary]).map(c => c.name).join(" / "),
+      m.fromName, m.fromAddr, m.subject, m.snippet, m.unread ? "未讀" : "已讀",
+    ].map(q).join(","));
+  }
+  const blob = new Blob(["﻿" + lines.join("\r\n")], { type:"text/csv;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `扶輪信件_${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+
+/* ==========================================================================
+   設定面板
+   ========================================================================== */
+function renderKwEditor(){
+  $("#kwEditor").innerHTML = cats.map(c => `
+    <div class="row">
+      <div class="kwhd" style="--tone:var(${c.tone})">
+        <span class="dot"></span><span>${esc(c.name)}</span>
+      </div>
+      <textarea data-kw="${c.id}" spellcheck="false">${esc(c.keywords.join("、"))}</textarea>
+    </div>`).join("");
+}
+
+function openSettings(){
+  $("#cid").value = cfg.clientId;
+  $("#hint").value = cfg.hint;
+  $("#cap").value = cfg.cap;
+  $("#inbox").checked = cfg.inbox;
+  $("#nopromo").checked = cfg.nopromo;
+  $("#extra").value = cfg.extra;
+  $("#canwrite").checked = cfg.canwrite;
+  renderKwEditor();
+  el.dlg.showModal();
+}
+window.openSettings = openSettings;
+
+function saveSettings(){
+  const scopeChanged = $("#canwrite").checked !== cfg.canwrite;
+  const idChanged = $("#cid").value.trim() !== cfg.clientId;
+
+  cfg.clientId = $("#cid").value.trim();
+  cfg.hint     = $("#hint").value.trim();
+  cfg.cap      = Math.max(20, Math.min(1000, Number($("#cap").value) || 200));
+  cfg.inbox    = $("#inbox").checked;
+  cfg.nopromo  = $("#nopromo").checked;
+  cfg.extra    = $("#extra").value.trim();
+  cfg.canwrite = $("#canwrite").checked;
+  saveCfg();
+
+  cats = cats.map(c => {
+    const ta = document.querySelector(`textarea[data-kw="${c.id}"]`);
+    if(!ta) return c;
+    const keywords = ta.value.split(/[\n,，、;；]+/).map(s => s.trim()).filter(Boolean);
+    return Object.assign({}, c, { keywords });
+  });
+  saveKw();
+  compile();
+
+  if(scopeChanged || idChanged) clearTok();   // 權限範圍或用戶端改了就得重新授權
+  el.dlg.close();
+  refresh({ interactive: scopeChanged || idChanged });
+}
+
+/* ==========================================================================
+   綁定
+   ========================================================================== */
+el.refresh.onclick = () => refresh({ interactive:true });
+$("#btnSettings").onclick = openSettings;
+$("#btnSave").onclick = saveSettings;
+$("#btnSignOut").onclick = () => { el.dlg.close(); signOut(); };
+$("#btnResetKw").onclick = () => {
+  cats = DEFAULT_CATS.map(c => Object.assign({}, c));
+  saveKw(); compile(); renderKwEditor();
+};
+el.csv.onclick = exportCsv;
+el.label.onclick = pushLabels;
+el.q.oninput = () => renderList();
+el.range.onchange = () => { cfg.range = el.range.value; saveCfg(); refresh(); };
+
+// 分頁重新取得焦點且資料超過 5 分鐘沒更新時，順手更新一次
+document.addEventListener("visibilitychange", () => {
+  if(!document.hidden && mails.length && Date.now() - lastRun > 5 * 60_000) refresh();
+});
+
+/* 開頁即更新：等 GIS 載完再跑，避免第一次一定失敗 */
+window.addEventListener("load", () => {
+  el.range.value = cfg.range;
+  if(!cfg.clientId){ needSetup(); return; }
+  const t0 = Date.now();
+  (function wait(){
+    if(gisReady() || window.__gisFailed || Date.now() - t0 > 6000) refresh();
+    else setTimeout(wait, 150);
+  })();
+});
+</script>
+</body>
+</html>
