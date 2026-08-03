@@ -1,0 +1,23 @@
+[build]
+  # 純靜態網頁，沒有建置步驟。Netlify 網站的根目錄就是扶輪信件分類台。
+  publish = "rotary-mail"
+  command = ""
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    # Google 登入需要能開自己的視窗並和它溝通，所以不能用 same-origin 的隔離策略。
+    Cross-Origin-Opener-Policy = "same-origin-allow-popups"
+
+[[headers]]
+  # 設定檔要能改完就生效，不要被 CDN 快取住。
+  for = "/config.js"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
