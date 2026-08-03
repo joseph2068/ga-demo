@@ -1,5 +1,7 @@
 # 下載
-yt-dlp>=2025.1.1
+# curl-cffi 這個 extra 很關鍵：yt-dlp 要靠它模擬瀏覽器的 TLS 指紋，
+# 才走得通 IG 的匿名（未登入）GraphQL 端點。沒有它，連公開貼文都會被擋。
+yt-dlp[default,curl-cffi]>=2025.1.1
 
 # 逐字稿（transcribe 步驟才需要）
 faster-whisper>=1.0.0

@@ -71,6 +71,19 @@ def video_for(info_path: Path) -> Path | None:
     return None
 
 
+def video_files(workdir: Path) -> list[Path]:
+    """workdir 裡所有影片檔，包含手動放進來、沒有 .info.json 的。"""
+    return sorted(
+        p for p in workdir.iterdir() if p.is_file() and p.suffix.lower() in VIDEO_SUFFIXES
+    )
+
+
+def info_for(video: Path) -> Path | None:
+    """反向找出影片對應的 .info.json，沒有就回 None（手動放進來的情況）。"""
+    candidate = video.with_name(video.stem + ".info.json")
+    return candidate if candidate.exists() else None
+
+
 # --------------------------------------------------------------------------
 # metadata
 
@@ -86,6 +99,21 @@ class Post:
     view_count: int | None
     like_count: int | None
     comment_count: int | None
+
+    @classmethod
+    def from_video_only(cls, video: Path) -> "Post":
+        """手動放進來、沒有 .info.json 的影片：只能靠檔名，數據欄位一律留空。"""
+        return cls(
+            post_id=video.stem,
+            url="",
+            uploader="",
+            date="",
+            duration=0,
+            description="",
+            view_count=None,
+            like_count=None,
+            comment_count=None,
+        )
 
     @classmethod
     def from_info(cls, info: dict) -> "Post":
@@ -139,7 +167,16 @@ def cmd_fetch(args: argparse.Namespace) -> int:
     elif args.cookies:
         cmd += ["--cookies", str(args.cookies)]
     else:
-        log("警告：沒給 cookies，IG 多半會擋下來（見 README 的『登入』段落）")
+        log("沒給 cookies：公開貼文通常仍抓得到，私密帳號則一定需要登入")
+
+    # 沒有 curl_cffi 的話，yt-dlp 走不了匿名 GraphQL 那條路，公開貼文也會被擋
+    try:
+        import curl_cffi  # noqa: F401
+    except ImportError:
+        log(
+            "警告：偵測不到 curl_cffi，yt-dlp 無法模擬瀏覽器 TLS 指紋，"
+            "匿名抓取公開貼文會失敗。請執行 pip install 'yt-dlp[default,curl-cffi]'"
+        )
     if args.skip_existing:
         cmd += ["--download-archive", str(workdir / "downloaded.txt")]
     cmd += urls
@@ -158,9 +195,11 @@ def cmd_fetch(args: argparse.Namespace) -> int:
 
 def cmd_transcribe(args: argparse.Namespace) -> int:
     workdir: Path = args.workdir
-    infos = info_json_files(workdir)
-    if not infos:
-        die(f"{workdir} 裡沒有 .info.json，請先跑 fetch")
+    if not workdir.exists():
+        die(f"找不到 {workdir}，請先跑 fetch")
+    videos = video_files(workdir)
+    if not videos:
+        die(f"{workdir} 裡沒有影片檔，請先跑 fetch（或手動放 mp4 進去）")
 
     try:
         from faster_whisper import WhisperModel
@@ -171,11 +210,7 @@ def cmd_transcribe(args: argparse.Namespace) -> int:
     model = WhisperModel(args.model, device=args.device, compute_type=args.compute_type)
 
     done = 0
-    for info_path in infos:
-        video = video_for(info_path)
-        if video is None:
-            log(f"跳過 {info_path.name}：找不到對應影片檔")
-            continue
+    for video in videos:
         out_txt = video.with_suffix(".txt")
         if out_txt.exists() and not args.overwrite:
             log(f"跳過 {video.name}：逐字稿已存在（--overwrite 可強制重做）")
@@ -255,30 +290,37 @@ def render_markdown(post: Post, transcript: str) -> str:
 def cmd_pack(args: argparse.Namespace) -> int:
     workdir: Path = args.workdir
     dest: Path = args.dest
-    infos = info_json_files(workdir)
-    if not infos:
-        die(f"{workdir} 裡沒有 .info.json，請先跑 fetch")
+    if not workdir.exists():
+        die(f"找不到 {workdir}，請先跑 fetch")
+    videos = video_files(workdir)
+    if not videos:
+        die(f"{workdir} 裡沒有影片檔，請先跑 fetch（或手動放 mp4 進去）")
     dest.mkdir(parents=True, exist_ok=True)
 
     posts: list[tuple[Post, str, Path]] = []
-    for info_path in infos:
-        try:
-            info = json.loads(info_path.read_text(encoding="utf-8"))
-        except json.JSONDecodeError:
-            log(f"跳過 {info_path.name}：JSON 解析失敗")
-            continue
-        post = Post.from_info(info)
+    orphans = 0
+    for video in videos:
+        info_path = info_for(video)
+        if info_path is None:
+            post = Post.from_video_only(video)
+            orphans += 1
+        else:
+            try:
+                info = json.loads(info_path.read_text(encoding="utf-8"))
+            except json.JSONDecodeError:
+                log(f"{info_path.name} JSON 解析失敗，改用檔名當作唯一資訊")
+                post = Post.from_video_only(video)
+            else:
+                post = Post.from_info(info)
 
-        transcript = ""
-        video = video_for(info_path)
-        if video is not None:
-            txt = video.with_suffix(".txt")
-            if txt.exists():
-                transcript = txt.read_text(encoding="utf-8")
+        txt = video.with_suffix(".txt")
+        transcript = txt.read_text(encoding="utf-8") if txt.exists() else ""
         if not transcript:
-            log(f"注意：{post.post_id} 沒有逐字稿，只會輸出文案與數據")
+            log(f"注意：{post.post_id} 沒有逐字稿，請先跑 transcribe")
 
-        out_name = f"{post.date or '0000-00-00'}_{post.post_id}_{post.label()}.md"
+        label = post.label()
+        stem = post.post_id if label == post.post_id else f"{post.post_id}_{label}"
+        out_name = f"{post.date or '0000-00-00'}_{stem}.md"
         out_path = dest / out_name
         out_path.write_text(render_markdown(post, transcript), encoding="utf-8")
         posts.append((post, transcript, out_path))
@@ -309,6 +351,11 @@ def cmd_pack(args: argparse.Namespace) -> int:
         log("已另外輸出 _all.md（單檔版，適合 NotebookLM 來源數量吃緊時用）")
 
     log(f"輸出 {len(posts)} 個 Markdown 到 {dest}")
+    if orphans:
+        log(
+            f"其中 {orphans} 支沒有 .info.json（手動放進來的），只有逐字稿，"
+            "缺觀看數／按讚數／文案／日期，跨影片比較會受限"
+        )
     return 0
 
 

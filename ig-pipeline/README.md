@@ -35,9 +35,43 @@ YouTube 那步保留成**選用的備份功能**，不再是分析路徑的一�
 - **不能只給帳號名稱就自動抓全部影片。** yt-dlp 的 `instagram:user` 抽取器目前標記為
   CURRENTLY BROKEN，所以像 `@headhomeuni` 這樣一個帳號，沒辦法一行指令列出它所有 Reels。
   你得先自己蒐集貼文網址（做法見下）。
-- **IG 需要登入 cookies。** 現在多數貼文未登入抓不到，而自動化抓取本來就違反 IG 的服務
-  條款，抓太快帳號會被限制。影片版權屬於原帳號，這套流程請當成個人研究／學習用途，不要
-  轉載或再發布。建議用小帳、放慢速度（預設每次請求間隔 3 秒）。
+- **公開貼文不一定需要登入，但一定需要 `curl_cffi`。** 詳見下一節。私密帳號則無解 ——
+  沒有任何工具或線上網站能繞過，你得先是被核准的追蹤者。
+- **自動化抓取違反 IG 服務條款**，抓太快帳號會被限制。影片版權屬於原帳號，這套流程請當成
+  個人研究／學習用途，不要轉載或再發布。建議放慢速度（預設每次請求間隔 3 秒）。
+
+## 為什麼線上下載網站（sssinstagram 之類）不用登入就能抓
+
+因為它們走的是 IG 的**匿名 GraphQL 端點** —— 而 yt-dlp 走的是同一條路，沒有誰有秘密管道。
+從 yt-dlp 的 `instagram.py` 就看得出來：它會 POST 到 `www.instagram.com/api/graphql`，
+帶上 `X-FB-Friendly-Name: PolarisLoggedOutDesktopWWWPostRootContentQuery`（名稱裡的
+LoggedOut 就是「未登入」）與一組 `doc_id`，回傳的 `xig_polaris_media.if_not_gated_logged_out`
+裡就有影片的 CDN 網址。拿到那個網址之後，檔案本身放在公開 CDN 上，一個普通 GET 就下載得到。
+
+真正的差別只有兩個：
+
+1. **TLS 指紋。** IG 會辨識連線的 TLS handshake 特徵，一般 Python HTTP 客戶端一看就是機器人。
+   yt-dlp 對這條路徑全部標了 `impersonate=True`，但那需要 `curl_cffi` 才能生效 —— 沒裝的話
+   `_can_impersonate` 是 False，整個匿名請求直接被跳過，最後 fallback 去抓網頁、被導去登入頁，
+   然後你看到的錯誤訊息會是「已超過匿名存取貼文的速率限制」。**這就是多數人以為「一定要
+   cookies」的真正原因。**
+2. **IP 信譽與速率限制。** 匿名存取是按 IP 限流的。那些網站背後有輪替的代理 IP 池，你只有
+   一個家用 IP，抓幾十支就會被擋。放慢速度、分批跑可以緩解。
+
+所以：`pip install -r requirements.txt`（已經包含 `curl-cffi` extra）之後，公開帳號多半不用
+cookies 就抓得到。抓到一半開始失敗就是撞到限流，隔一陣子再跑，或補上 `--cookies-from-browser`。
+
+順帶一提，那些網站**也抓不到私密帳號** —— 它們用的是「未登入」端點，本來就只看得到公開內容。
+
+### 那能不能乾脆都用那些網站下載就好？
+
+幾支影片可以，做分析語料不行 —— 因為**你只會拿到一個 mp4，metadata 全部丟失**：觀看數、
+按讚數、留言數、貼文文案、發布日期都沒有。而那些欄位正是後面 `pack` 出來的素材能拿來做
+跨影片比較的依據（哪支表現好、開頭鉤子跟互動有沒有關係）。少了它們，NotebookLM 和 Claude
+就只剩下逐字稿可看。加上要一支一支手貼、有廣告與人機驗證、部分站台還會轉檔壓畫質。
+
+真的只能靠那些網站拿到影片的話，把 mp4 丟進 `work/`，`transcribe` 和 `pack` 仍然會處理它們
+（見下方「手動放進來的影片」）。
 
 ## 安裝
 
@@ -70,7 +104,8 @@ pip install -r requirements.txt
 cp urls.example.txt urls.txt   # 然後把真正的網址填進去
 
 # 1. 下載影片與 metadata（觀看數、按讚數、文案、日期都會存進 .info.json）
-python igpipe.py fetch --urls urls.txt --cookies-from-browser chrome --skip-existing
+#    公開帳號先試不帶 cookies；被限流或遇到私密帳號再加 --cookies-from-browser chrome
+python igpipe.py fetch --urls urls.txt --skip-existing
 
 # 2. 本機產生逐字稿（第一次會下載 Whisper 權重）
 python igpipe.py transcribe --model small --lang zh
@@ -100,6 +135,12 @@ python igpipe.py pack --dest notebooklm --single-file
 ```
 
 metadata 寫成人看得懂的句子而不是 JSON，是因為 NotebookLM 要能引用到它。
+
+### 手動放進來的影片
+
+從線上下載站或別的地方拿到的 mp4，直接丟進 `work/` 就行，`transcribe` 和 `pack` 都會處理
+（它們掃的是影片檔，不是 `.info.json`）。這類影片會在 `pack` 結束時被統計出來提醒你，輸出的
+Markdown 只有逐字稿，metadata 欄位會是「未知」。檔名會被拿來當貼文 ID，所以取個看得懂的名字。
 
 ### 4.（選用）備份到 YouTube
 
