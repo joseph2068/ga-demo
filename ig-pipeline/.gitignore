@@ -1,6 +1,7 @@
 # 下載的影片與中間產物
 work/
 notebooklm/
+__pycache__/
 
 # 自己的網址清單（範例檔 urls.example.txt 有進版控）
 urls.txt

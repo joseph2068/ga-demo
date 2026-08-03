@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IG 影片抓取與分析</title>
+<style>
+  :root {
+    --bg: #fbfbfa; --panel: #fff; --ink: #1a1a19; --muted: #6b6b68;
+    --line: #e3e3e0; --accent: #b8532c; --accent-ink: #fff;
+    --code-bg: #f4f4f2; --ok: #2f6f4f; --err: #a33a2a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1a1a19; --panel: #232322; --ink: #ecebe7; --muted: #9a9a95;
+      --line: #353533; --accent: #d97a52; --accent-ink: #1a1a19;
+      --code-bg: #1a1a19; --ok: #7fbf9a; --err: #e08a76;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 15px/1.6 -apple-system, "Segoe UI", "Noto Sans TC", "PingFang TC", sans-serif;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 32px 20px 80px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .sub { color: var(--muted); font-size: 14px; margin: 0 0 28px; }
+  .panel {
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: 10px; padding: 20px; margin-bottom: 18px;
+  }
+  h2 { font-size: 14px; text-transform: uppercase; letter-spacing: .06em;
+       color: var(--muted); margin: 0 0 12px; font-weight: 600; }
+  textarea {
+    width: 100%; min-height: 130px; padding: 12px; resize: vertical;
+    background: var(--code-bg); color: var(--ink);
+    border: 1px solid var(--line); border-radius: 6px;
+    font: 13px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  .opts { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 14px; align-items: flex-end; }
+  .opt { display: flex; flex-direction: column; gap: 5px; }
+  .opt label { font-size: 12px; color: var(--muted); }
+  select, input[type=text] {
+    background: var(--code-bg); color: var(--ink); border: 1px solid var(--line);
+    border-radius: 6px; padding: 7px 9px; font-size: 13px; min-width: 130px;
+  }
+  .check { flex-direction: row; align-items: center; gap: 7px; }
+  .check label { font-size: 13px; color: var(--ink); }
+  button {
+    background: var(--accent); color: var(--accent-ink); border: 0;
+    border-radius: 6px; padding: 10px 20px; font-size: 14px;
+    font-weight: 600; cursor: pointer; font-family: inherit;
+  }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  button.ghost {
+    background: transparent; color: var(--ink); border: 1px solid var(--line);
+    padding: 6px 12px; font-size: 12px; font-weight: 500;
+  }
+  #log {
+    background: var(--code-bg); border: 1px solid var(--line); border-radius: 6px;
+    padding: 12px; max-height: 260px; overflow: auto; white-space: pre-wrap;
+    font: 12px/1.7 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--muted);
+  }
+  .state { font-size: 13px; margin-bottom: 10px; }
+  .state.err { color: var(--err); }
+  .state.ok { color: var(--ok); }
+  .card { border: 1px solid var(--line); border-radius: 8px; padding: 16px; margin-bottom: 12px; }
+  .card h3 { margin: 0 0 6px; font-size: 15px; }
+  .card h3 a { color: var(--accent); text-decoration: none; }
+  .meta { color: var(--muted); font-size: 12px; margin-bottom: 10px; }
+  .caption { white-space: pre-wrap; margin: 0 0 10px; font-size: 14px; }
+  details summary { cursor: pointer; font-size: 13px; color: var(--muted); }
+  .transcript { white-space: pre-wrap; margin-top: 8px; font-size: 14px;
+                background: var(--code-bg); padding: 12px; border-radius: 6px; }
+  .warn { color: var(--err); font-size: 12px; }
+  .hide { display: none; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>IG 影片抓取與分析</h1>
+  <p class="sub">貼上 IG 貼文網址，抓影片與數據、產生逐字稿，然後把整理好的素材複製給 Claude 或 NotebookLM。全部在本機執行。</p>
+
+  <div class="panel">
+    <h2>1. 貼上網址</h2>
+    <textarea id="urls" placeholder="一行一個，例如：&#10;https://www.instagram.com/reel/XXXXXXXXXXX/&#10;https://www.instagram.com/p/YYYYYYYYYYY/&#10;&#10;注意：帳號首頁（instagram.com/someone）不行，要單篇貼文網址。"></textarea>
+    <div class="opts">
+      <div class="opt">
+        <label for="model">Whisper 模型</label>
+        <select id="model">
+          <option value="tiny">tiny（最快、最不準）</option>
+          <option value="base">base</option>
+          <option value="small" selected>small（推薦）</option>
+          <option value="medium">medium</option>
+          <option value="large-v3">large-v3（最準、最慢）</option>
+        </select>
+      </div>
+      <div class="opt">
+        <label for="lang">語言</label>
+        <select id="lang">
+          <option value="">自動偵測</option>
+          <option value="zh" selected>中文</option>
+          <option value="en">英文</option>
+          <option value="ja">日文</option>
+        </select>
+      </div>
+      <div class="opt">
+        <label for="cookies">Cookies 來源（被擋時才需要）</label>
+        <select id="cookies">
+          <option value="">不使用</option>
+          <option value="chrome">Chrome</option>
+          <option value="firefox">Firefox</option>
+          <option value="edge">Edge</option>
+          <option value="safari">Safari</option>
+        </select>
+      </div>
+      <div class="opt check">
+        <input type="checkbox" id="transcribe" checked>
+        <label for="transcribe">產生逐字稿</label>
+      </div>
+    </div>
+    <div class="row"><button id="go">開始抓取</button></div>
+  </div>
+
+  <div class="panel hide" id="progress">
+    <h2>2. 進度</h2>
+    <div class="state" id="state"></div>
+    <div id="log"></div>
+  </div>
+
+  <div class="panel hide" id="results">
+    <h2>3. 結果</h2>
+    <div class="row">
+      <button class="ghost" id="copyAll">複製全部（Markdown）</button>
+      <button class="ghost" id="copyPrompt">複製「跨影片拆解」提示詞＋素材</button>
+      <button class="ghost" id="download">下載 .md 檔</button>
+    </div>
+    <div id="cards" style="margin-top:16px"></div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+let items = [], poll = null;
+
+const CROSS_PROMPT = `附件是同一個 IG 帳號的多支短影片素材，包含逐字稿、發布日期與互動數據。請回答：
+
+1. 這個帳號的選題可以分成哪幾類？各類的數量與平均互動如何？
+2. 表現最好的前幾支，開頭 3 秒有沒有共同結構？
+3. 影片長度、發布時間與互動數之間有沒有看得出來的關係？（數據量不足就直說，不要硬湊）
+4. 有哪些反覆出現的句型或口頭禪，構成這個帳號的辨識度？
+5. 如果要照這個帳號的模式再寫 5 個選題，你會提哪些？各附一句開頭鉤子。
+
+每一項都要引用逐字稿原文當證據，不要用通則性的評語。
+
+---
+
+`;
+
+function allMarkdown() {
+  return items.map(i => i.markdown).join('\n\n---\n\n');
+}
+
+async function copyText(text, btn) {
+  const original = btn.textContent;
+  try {
+    await navigator.clipboard.writeText(text);
+    btn.textContent = '已複製 ✓';
+  } catch {
+    btn.textContent = '複製失敗';
+  }
+  setTimeout(() => { btn.textContent = original; }, 1600);
+}
+
+function num(n) { return n === null || n === undefined ? '—' : n.toLocaleString(); }
+
+function render() {
+  $('results').classList.remove('hide');
+  $('cards').innerHTML = items.map(i => `
+    <div class="card">
+      <h3>${i.url ? `<a href="${i.url}" target="_blank" rel="noreferrer">${i.id}</a>` : i.id}</h3>
+      <div class="meta">
+        ${i.date || '日期未知'} ・ ${i.duration ? i.duration + ' 秒' : '長度未知'}
+        ・ 觀看 ${num(i.views)} ・ 按讚 ${num(i.likes)} ・ 留言 ${num(i.comments)}
+        ${i.has_metadata ? '' : '<br><span class="warn">手動放入，無 metadata</span>'}
+      </div>
+      ${i.caption ? `<p class="caption">${i.caption.replace(/</g, '&lt;')}</p>` : ''}
+      ${i.transcript
+        ? `<details><summary>逐字稿（${i.transcript.length} 字）</summary>
+             <div class="transcript">${i.transcript.replace(/</g, '&lt;')}</div></details>`
+        : '<div class="warn">沒有逐字稿</div>'}
+    </div>`).join('');
+}
+
+const LABELS = {
+  queued: '排隊中…', fetching: '下載影片中…',
+  transcribing: '產生逐字稿中（第一次會下載 Whisper 權重，請耐心等）…',
+  packing: '打包素材中…', done: '完成', error: '失敗',
+};
+
+async function tick(jobId) {
+  const res = await fetch(`/api/jobs/${jobId}`);
+  if (!res.ok) return;
+  const job = await res.json();
+
+  $('state').textContent = LABELS[job.state] || job.state;
+  $('state').className = 'state' + (job.state === 'done' ? ' ok' : job.state === 'error' ? ' err' : '');
+  if (job.error) $('state').textContent = '失敗：' + job.error;
+  $('log').textContent = job.log.join('\n');
+  $('log').scrollTop = $('log').scrollHeight;
+
+  if (job.state === 'done' || job.state === 'error') {
+    clearInterval(poll); poll = null;
+    $('go').disabled = false;
+    $('go').textContent = '開始抓取';
+    items = job.items || [];
+    if (items.length) render();
+  }
+}
+
+$('go').onclick = async () => {
+  const urls = $('urls').value.trim();
+  if (!urls) { alert('請先貼上網址'); return; }
+
+  $('go').disabled = true;
+  $('go').textContent = '執行中…';
+  $('progress').classList.remove('hide');
+  $('results').classList.add('hide');
+  $('log').textContent = '';
+  $('state').textContent = '送出中…';
+
+  const res = await fetch('/api/jobs', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      urls,
+      model: $('model').value,
+      lang: $('lang').value,
+      transcribe: $('transcribe').checked,
+      cookies_from_browser: $('cookies').value,
+    }),
+  });
+  const data = await res.json();
+
+  if (!res.ok) {
+    $('state').textContent = '失敗：' + data.error;
+    $('state').className = 'state err';
+    $('go').disabled = false;
+    $('go').textContent = '開始抓取';
+    return;
+  }
+  if (data.rejected && data.rejected.length) {
+    $('log').textContent = `已略過 ${data.rejected.length} 個不合格的網址：\n` +
+      data.rejected.join('\n') + '\n\n';
+  }
+  poll = setInterval(() => tick(data.job_id), 1200);
+};
+
+$('copyAll').onclick = e => copyText(allMarkdown(), e.target);
+$('copyPrompt').onclick = e => copyText(CROSS_PROMPT + allMarkdown(), e.target);
+$('download').onclick = () => {
+  const blob = new Blob([allMarkdown()], { type: 'text/markdown;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'ig-analysis.md';
+  a.click();
+  URL.revokeObjectURL(a.href);
+};
+</script>
+</body>
+</html>

@@ -83,6 +83,24 @@ pip install -r requirements.txt
 
 不做 YouTube 備份的話，`requirements.txt` 裡的兩個 google 套件可以不裝。
 
+## 網頁介面（最省事的用法）
+
+```bash
+python webapp.py          # 然後開 http://127.0.0.1:8765
+```
+
+貼上網址 → 按開始 → 看即時進度 → 結果直接顯示 metadata 與逐字稿，底下三個按鈕可以複製
+Markdown、複製「跨影片拆解提示詞＋素材」、或下載 `.md`。複製完直接貼進 Claude 或存成檔案
+上傳 NotebookLM。
+
+**這個網頁只能跑在你自己電腦上，不能放 GitHub Pages。** 純靜態頁面做不到抓取：瀏覽器的
+CORS 會擋掉對 instagram.com 的請求，而且前面講的 TLS 指紋模擬與 IP 限流都必須在伺服器端
+處理。`webapp.py` 就是那個伺服器，它只綁 `127.0.0.1`，不對外開放。
+
+介面本身只是包住 `igpipe.py`，所以兩種用法產出的東西完全一樣，喜歡命令列就繼續用下面的
+四個步驟。網頁端只接受 `/reel/…`、`/p/…`、`/tv/…` 這類單篇貼文網址，貼帳號首頁會被擋下來
+並告訴你原因。
+
 ## 怎麼蒐集網址
 
 `instagram:user` 壞掉，所以三選一：
