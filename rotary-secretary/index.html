@@ -97,6 +97,16 @@ section[hidden]{display:none}
 .progress-card.done .progress-note{color:var(--ok);font-weight:600}
 
 /* ---------- 群組與項目 ---------- */
+/* 例會型式切換 */
+.modebar{display:flex;gap:4px;background:var(--surface-2);border:1px solid var(--rule);border-radius:999px;padding:4px;margin-bottom:16px}
+.modebar button{flex:1;border:0;background:none;border-radius:999px;padding:9px 10px;font-weight:700;font-size:14.5px;color:var(--ink-3);line-height:1.3;transition:.15s}
+.modebar button small{display:block;font-weight:500;font-size:11.5px;color:var(--ink-3);margin-top:2px}
+.modebar button[aria-pressed="true"]{background:var(--surface);color:var(--royal);box-shadow:0 1px 3px rgba(21,32,58,.13)}
+.modebar button[aria-pressed="true"] small{color:var(--azure)}
+.modebar button:focus-visible{outline:2px solid var(--azure);outline-offset:2px}
+.mode-label{font-size:12.5px;font-weight:700;color:var(--ink-3);letter-spacing:.03em;margin:0 0 6px 2px}
+.group-note{font-size:12.5px;color:var(--ink-3);margin:8px 2px 0}
+
 .group{margin-bottom:20px}
 .group-title{
   display:flex;align-items:center;gap:9px;margin:0 2px 9px;
@@ -258,7 +268,7 @@ footer.page{max-width:940px;margin:26px auto 0;padding:0 16px;color:var(--ink-3)
   <div class="top-in">
     <span class="badge">扶輪社秘書工作台 · <b>Rotary</b></span>
     <h1>例會應帶清單 & 交接事項</h1>
-    <p>出門前逐項打勾，缺席時把小鐘、社旗、活動旗交接清楚。勾選狀態會自動存在這台裝置，關掉網頁也不會不見。</p>
+    <p>先選例會型式（一般場地帶大鐘，活動例會帶小鐘），出門前逐項打勾，缺席時把鐘、社旗、活動旗交接清楚。勾選狀態會自動存在這台裝置。</p>
   </div>
 </header>
 
@@ -273,6 +283,8 @@ footer.page{max-width:940px;margin:26px auto 0;padding:0 16px;color:var(--ink-3)
 <main>
   <!-- ============ ① 例會應帶清單 ============ -->
   <section id="checklist">
+    <p class="mode-label">這次是哪一種例會？（大鐘與小鐘擇一）</p>
+    <div class="modebar" id="modebar-1"></div>
     <div class="progress-card" id="prog">
       <div class="progress-head">
         <strong>本次例會準備進度</strong>
@@ -292,7 +304,7 @@ footer.page{max-width:940px;margin:26px auto 0;padding:0 16px;color:var(--ink-3)
       <ol class="steps">
         <li>
           <h3>例會前 3 天：確認代理人</h3>
-          <p>在社群組公告誰代理秘書，指定一位代理人負責大鐘、鐘錘與小鐘，另指定一位負責簽到與文書（來賓簽到單、QR code、講師費領據、講師桌牌）。</p>
+          <p>在社群組公告誰代理秘書。指定一位代理人負責敲鐘器具（<b>一般場地例會＝大鐘＋鐘錘；活動例會＝小鐘，兩者擇一</b>），另指定一位負責簽到與文書（來賓簽到單、QR code、講師費領據、講師桌牌）。</p>
         </li>
         <li>
           <h3>例會前 1 天：實體點交 + 拍照存證</h3>
@@ -300,7 +312,7 @@ footer.page{max-width:940px;margin:26px auto 0;padding:0 16px;color:var(--ink-3)
         </li>
         <li>
           <h3>當天會前 30 分鐘：定位</h3>
-          <p>大鐘與鐘錘置於主桌、小鐘交社長／司儀、四大考驗旗與社旗立於講台側、手拉旗掛於合影背板、簽到單與 QR code 立牌放在入口簽到桌。</p>
+          <p>一般場地例會：大鐘與鐘錘置於主桌中央；活動例會：小鐘直接交到社長／司儀手上。四大考驗旗與社旗立於講台側、手拉旗掛於合影背板、簽到單與 QR code 立牌放在入口簽到桌。</p>
         </li>
         <li>
           <h3>例會後：活動旗轉交下一場活動負責人</h3>
@@ -308,11 +320,11 @@ footer.page{max-width:940px;margin:26px auto 0;padding:0 16px;color:var(--ink-3)
         </li>
         <li>
           <h3>例會後 1 天：歸還與回報</h3>
-          <p>大鐘、鐘錘、小鐘、社旗、四大考驗旗、手拉旗歸回原保管處；講師費領據正本、簽到單正本交回秘書存檔；出席人數與來賓名單回報秘書。</p>
+          <p>當次使用的鐘具（大鐘＋鐘錘或小鐘）、社旗、四大考驗旗、手拉旗歸回原保管處；講師費領據正本、簽到單正本交回秘書存檔；出席人數與來賓名單回報秘書。</p>
         </li>
       </ol>
       <div class="callout">
-        <b>最容易出包的三件事：</b>鐘錘與大鐘分開放而漏帶、活動旗被帶回家導致下一場活動沒旗、講師費領據沒簽名導致財務無法核銷。這三項請在交接單上特別確認。
+        <b>最容易出包的四件事：</b>搞錯例會型式而搬錯鐘、鐘錘與大鐘分開放而漏帶、活動旗被帶回家導致下一場活動沒旗、講師費領據沒簽名導致財務無法核銷。這幾項請在交接單上特別確認。
       </div>
     </div>
 
@@ -327,6 +339,8 @@ footer.page{max-width:940px;margin:26px auto 0;padding:0 16px;color:var(--ink-3)
     <div class="card no-print">
       <h2>填寫交接單</h2>
       <p class="lead">填完按「產生交接單」，可直接列印簽名，或一鍵複製文字貼到 LINE 群組。</p>
+      <p class="mode-label" style="margin-top:16px">例會型式</p>
+      <div class="modebar" id="modebar-2"></div>
       <div class="fields">
         <div class="field"><label for="f-club">社名</label><input id="f-club" placeholder="例：台北○○扶輪社"></div>
         <div class="field"><label for="f-term">屆次／年度</label><input id="f-term" placeholder="例：2025-26 年度"></div>
@@ -375,14 +389,14 @@ footer.page{max-width:940px;margin:26px auto 0;padding:0 16px;color:var(--ink-3)
    handTo = 秘書缺席時，這項該交給誰
    ============================================================ */
 const ITEMS = [
-  { id:'bell-big',  cat:'鐘具',     name:'大鐘',
-    hint:'放主桌中央，開會／閉會敲鐘用。鐘身與底座一起帶。',
+  { id:'bell-big',  cat:'鐘具',     name:'大鐘', mode:'normal',
+    hint:'一般場地例會使用，置於主桌中央，開會／閉會敲鐘。鐘身與底座一起帶。',
     handTo:'代理秘書（會後歸回社器材保管處）' },
-  { id:'bell-hammer', cat:'鐘具',   name:'鐘錘',
-    hint:'最常漏帶的一項！請與大鐘放在同一個袋子並當場確認。',
+  { id:'bell-hammer', cat:'鐘具',   name:'鐘錘', mode:'normal',
+    hint:'最常漏帶的一項！與大鐘放同一個袋子並當場確認；用小鐘的活動例會不需要。',
     handTo:'代理秘書（務必與大鐘同袋）' },
-  { id:'bell-small', cat:'鐘具',    name:'小鐘',
-    hint:'社長／司儀控制流程用，秘書缺席時當面交給代理人。',
+  { id:'bell-small', cat:'鐘具',    name:'小鐘', mode:'event',
+    hint:'活動例會（爐邊會、外出參訪、小型場地）使用，會前直接交到社長／司儀手上。',
     handTo:'社長或司儀（會前直接交到手上）' },
   { id:'flag-4way', cat:'旗幟',     name:'四大考驗旗',
     hint:'立於講台側，宣讀四大考驗時使用。',
@@ -410,8 +424,13 @@ const ITEMS = [
     handTo:'代理秘書（會前放講師座位）' }
 ];
 const CATS = ['鐘具','旗幟','文書印製'];
+const MODES = {
+  normal:{ name:'一般場地例會', sub:'帶大鐘＋鐘錘', note:'一般場地例會敲大鐘；若改到爐邊會或外出場地，請切換成「活動例會」改帶小鐘。' },
+  event: { name:'活動例會',     sub:'帶小鐘',       note:'活動例會敲小鐘，大鐘與鐘錘留在社器材保管處，不必搬。' }
+};
 const KEY_CHECK = 'rotary-sec-checklist-v1';
 const KEY_FORM  = 'rotary-sec-handover-v1';
+const KEY_MODE  = 'rotary-sec-mode-v1';
 
 const $  = (s,r=document)=>r.querySelector(s);
 const $$ = (s,r=document)=>[...r.querySelectorAll(s)];
@@ -422,6 +441,11 @@ const store = {
   set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
 };
 let checked = store.get(KEY_CHECK, {});
+let mode = store.get(KEY_MODE, 'normal');
+if(!MODES[mode]) mode = 'normal';
+
+// 依例會型式篩選：未標 mode 的項目兩種例會都要帶
+const activeItems = () => ITEMS.filter(i => !i.mode || i.mode === mode);
 
 /* ---------------- 分頁 ---------------- */
 $$('.tab').forEach(t=>t.addEventListener('click',()=>{
@@ -429,6 +453,23 @@ $$('.tab').forEach(t=>t.addEventListener('click',()=>{
   ['checklist','handover','sheet'].forEach(id=>$('#'+id).hidden = (id!==t.dataset.tab));
   window.scrollTo({top:0,behavior:'smooth'});
 }));
+
+/* ---------------- 例會型式 ---------------- */
+function renderModebars(){
+  const html = Object.entries(MODES).map(([k,m])=>`
+    <button type="button" data-mode="${k}" aria-pressed="${k===mode}">
+      ${esc(m.name)}<small>${esc(m.sub)}</small>
+    </button>`).join('');
+  ['#modebar-1','#modebar-2'].forEach(sel=>{ $(sel).innerHTML = html; });
+}
+document.addEventListener('click', e=>{
+  const b = e.target.closest('.modebar button');
+  if(!b) return;
+  mode = b.dataset.mode;
+  store.set(KEY_MODE, mode);
+  renderModebars(); renderChecklist(); renderHandGuide(); renderHandItems();
+  toast(MODES[mode].name + '：' + MODES[mode].sub);
+});
 
 /* ---------------- ① 清單 ---------------- */
 function tagsFor(it){
@@ -440,7 +481,7 @@ function tagsFor(it){
 }
 function renderChecklist(){
   $('#groups').innerHTML = CATS.map(cat=>{
-    const rows = ITEMS.filter(i=>i.cat===cat).map(it=>`
+    const rows = activeItems().filter(i=>i.cat===cat).map(it=>`
       <div class="item${checked[it.id]?' checked':''}" data-id="${it.id}">
         <label>
           <input type="checkbox" ${checked[it.id]?'checked':''} data-id="${it.id}">
@@ -451,7 +492,8 @@ function renderChecklist(){
           </span>
         </label>
       </div>`).join('');
-    return `<div class="group"><div class="group-title">${esc(cat)}</div><div class="list">${rows}</div></div>`;
+    const note = cat==='鐘具' ? `<p class="group-note">${esc(MODES[mode].note)}</p>` : '';
+    return `<div class="group"><div class="group-title">${esc(cat)}</div><div class="list">${rows}</div>${note}</div>`;
   }).join('');
 
   $$('#groups input[type=checkbox]').forEach(cb=>cb.addEventListener('change',()=>{
@@ -463,12 +505,13 @@ function renderChecklist(){
   updateProgress();
 }
 function updateProgress(){
-  const total = ITEMS.length;
-  const done  = ITEMS.filter(i=>checked[i.id]).length;
+  const act   = activeItems();
+  const total = act.length;
+  const done  = act.filter(i=>checked[i.id]).length;
   $('#done').textContent = done;
   $('#total').textContent = total;
   $('#bar').style.width = (done/total*100)+'%';
-  const miss = ITEMS.filter(i=>!checked[i.id]).map(i=>i.name);
+  const miss = act.filter(i=>!checked[i.id]).map(i=>i.name);
   $('#prog').classList.toggle('done', done===total);
   $('#prog-note').textContent = done===total
     ? '全部備齊，可以出發了。'
@@ -476,7 +519,7 @@ function updateProgress(){
   $('#status').textContent = done===0 ? '尚未勾選任何項目' : `已備妥 ${done} / ${total} 項`;
 }
 $('#btn-all').addEventListener('click',()=>{
-  ITEMS.forEach(i=>checked[i.id]=true); store.set(KEY_CHECK,checked); renderChecklist(); toast('全部勾選完成');
+  activeItems().forEach(i=>checked[i.id]=true); store.set(KEY_CHECK,checked); renderChecklist(); toast('全部勾選完成');
 });
 $('#btn-reset').addEventListener('click',()=>{
   if(!confirm('要清除所有勾選，重新準備下一次例會嗎？')) return;
@@ -484,23 +527,28 @@ $('#btn-reset').addEventListener('click',()=>{
 });
 
 /* ---------------- ② 交接對象一覽 ---------------- */
-$('#hand-guide').innerHTML = ITEMS.map(it=>`
-  <div class="item">
-    <span class="txt">
-      <span class="name">${esc(it.name)}</span>
-      <div class="hint">交給：${esc(it.handTo)}</div>
-    </span>
-  </div>`).join('');
+function renderHandGuide(){
+  $('#hand-guide').innerHTML = activeItems().map(it=>`
+    <div class="item">
+      <span class="txt">
+        <span class="name">${esc(it.name)}</span>
+        <div class="hint">交給：${esc(it.handTo)}</div>
+      </span>
+    </div>`).join('') + `<div class="item"><span class="txt"><div class="hint">${esc(MODES[mode].note)}</div></span></div>`;
+}
 
 /* ---------------- ③ 交接單 ---------------- */
 const FIELDS = ['f-club','f-term','f-date','f-place','f-from','f-to','f-phone','f-next','f-memo'];
 let form = store.get(KEY_FORM, {items:{}, to:{}});
 
-$('#hand-items').innerHTML = ITEMS.map(it=>`
-  <div class="hand-row" data-id="${it.id}">
-    <label><input type="checkbox" data-id="${it.id}"> ${esc(it.name)}</label>
-    <span class="to"><input type="text" data-to="${it.id}" placeholder="交給誰？（預設：${esc(it.handTo)}）"></span>
-  </div>`).join('');
+function renderHandItems(){
+  $('#hand-items').innerHTML = activeItems().map(it=>`
+    <div class="hand-row" data-id="${it.id}">
+      <label><input type="checkbox" data-id="${it.id}"> ${esc(it.name)}</label>
+      <span class="to"><input type="text" data-to="${it.id}" placeholder="交給誰？（預設：${esc(it.handTo)}）"></span>
+    </div>`).join('');
+  loadForm();
+}
 
 function loadForm(){
   FIELDS.forEach(id=>{ if(form[id]!=null) $('#'+id).value = form[id]; });
@@ -523,11 +571,11 @@ $('#hand-items').addEventListener('input',e=>{
   if(e.target.type==='checkbox') e.target.closest('.hand-row').classList.toggle('off', !e.target.checked);
   saveForm();
 });
-loadForm();
+renderHandItems();
 
 function selectedItems(){
-  return ITEMS.filter(it=>$(`#hand-items input[data-id="${it.id}"]`).checked)
-              .map(it=>({...it, to: form.to?.[it.id] || it.handTo}));
+  return activeItems().filter(it=>$(`#hand-items input[data-id="${it.id}"]`)?.checked)
+                      .map(it=>({...it, to: form.to?.[it.id] || it.handTo}));
 }
 function fmtDate(v){
   if(!v) return '＿＿＿年＿＿月＿＿日';
@@ -548,6 +596,7 @@ function buildSheet(){
       <p class="sub">${esc(v('f-club')||'＿＿＿＿扶輪社')}　${esc(v('f-term'))}</p>
       <div class="t-wrap"><table class="sheet-t">
         <tr><th>例會日期</th><td>${fmtDate(v('f-date'))}</td><th>地點</th><td>${esc(v('f-place')||'—')}</td></tr>
+        <tr><th>例會型式</th><td colspan="3">${esc(MODES[mode].name)}（${esc(MODES[mode].sub)}）</td></tr>
         <tr><th>交付人</th><td>${esc(v('f-from')||'—')}（秘書）</td><th>接收人</th><td>${esc(v('f-to')||'—')}　${esc(v('f-phone'))}</td></tr>
         <tr><th>活動旗<br>後續接收</th><td colspan="3">${esc(v('f-next')||'下一場活動負責人：＿＿＿＿＿＿')}</td></tr>
       </table></div>
@@ -572,6 +621,7 @@ function buildText(){
   L.push('【例會物品交接單】');
   if(v('f-club')||v('f-term')) L.push(`${v('f-club')} ${v('f-term')}`.trim());
   L.push(`例會日期：${fmtDate(v('f-date'))}${v('f-place')?'　地點：'+v('f-place'):''}`);
+  L.push(`例會型式：${MODES[mode].name}（${MODES[mode].sub}）`);
   L.push(`交付人（秘書）：${v('f-from')||'—'}`);
   L.push(`接收人：${v('f-to')||'—'}${v('f-phone')?'（'+v('f-phone')+'）':''}`);
   L.push('');
@@ -602,7 +652,7 @@ $('#btn-clear-form').addEventListener('click',()=>{
   if(!confirm('要清空交接單的所有欄位嗎？')) return;
   form = {items:{}, to:{}}; store.set(KEY_FORM, form);
   FIELDS.forEach(id=>$('#'+id).value='');
-  loadForm(); $('#print-area').innerHTML=''; toast('表單已清空');
+  renderHandItems(); $('#print-area').innerHTML=''; toast('表單已清空');
 });
 
 /* ---------------- toast ---------------- */
@@ -612,7 +662,9 @@ function toast(msg){
   clearTimeout(toastTimer); toastTimer = setTimeout(()=>el.classList.remove('show'), 1900);
 }
 
+renderModebars();
 renderChecklist();
+renderHandGuide();
 </script>
 </body>
 </html>
