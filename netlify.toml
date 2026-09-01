@@ -1,0 +1,18 @@
+# Netlify 設定：純靜態網站，不需要 build。
+# 首頁 /            → 小雞上工職缺分析器 (index.html)
+# /rotary-secretary → 扶輪社秘書例會清單與交接單
+[build]
+  publish = "."
+  command = ""
+
+# 好記的短網址
+[[redirects]]
+  from = "/rotary"
+  to = "/rotary-secretary/"
+  status = 301
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"

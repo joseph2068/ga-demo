@@ -1,0 +1,618 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>扶輪社秘書 · 例會應帶清單與交接單</title>
+<meta name="description" content="扶輪社秘書例會應帶物品檢查表、缺席時的交接事項與可列印／可複製到 LINE 的交接單。">
+<meta name="color-scheme" content="light">
+<meta name="theme-color" content="#17458F">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%94%94%3C/text%3E%3C/svg%3E">
+<style>
+/* ============================================================
+   扶輪社秘書工具 — 例會應帶清單 / 交接事項 / 交接單
+   色系取自國際扶輪：Royal Blue #17458F、Gold #F7A81B、Azure #0067C8
+   ============================================================ */
+:root{
+  --royal:#17458F;
+  --royal-dark:#0F2E63;
+  --azure:#0067C8;
+  --gold:#F7A81B;
+  --gold-soft:#FDF3DC;
+
+  --paper:#F4F6FA;
+  --surface:#FFFFFF;
+  --surface-2:#EDF1F8;
+  --rule:#D8E0EE;
+  --rule-faint:#E8EDF6;
+
+  --ink:#15203A;
+  --ink-2:#41506E;
+  --ink-3:#74839F;
+
+  --ok:#137A4B;
+  --ok-soft:#E4F4EC;
+  --warn:#A8580A;
+
+  --r-lg:16px;
+  --r-md:11px;
+  --r-sm:7px;
+  --shadow:0 1px 2px rgba(21,32,58,.06), 0 8px 24px rgba(21,32,58,.06);
+  --font:"Noto Sans TC","PingFang TC","Heiti TC","Microsoft JhengHei",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+*{box-sizing:border-box}
+html{background:var(--paper);-webkit-text-size-adjust:100%}
+body{
+  margin:0;font-family:var(--font);color:var(--ink);background:var(--paper);
+  font-size:16px;line-height:1.65;padding-bottom:96px;
+}
+h1,h2,h3{line-height:1.3;margin:0}
+button{font-family:inherit;font-size:inherit;cursor:pointer}
+input,textarea{font-family:inherit;font-size:inherit;color:inherit}
+a{color:var(--azure)}
+
+/* ---------- 版頭 ---------- */
+.top{
+  background:linear-gradient(135deg,var(--royal) 0%,var(--royal-dark) 100%);
+  color:#fff;padding:26px 20px 22px;
+}
+.top-in{max-width:940px;margin:0 auto}
+.badge{
+  display:inline-flex;align-items:center;gap:7px;
+  background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.24);
+  color:#fff;border-radius:999px;padding:4px 12px;font-size:12.5px;letter-spacing:.04em;
+}
+.badge b{color:var(--gold);font-weight:700}
+.top h1{font-size:26px;margin:12px 0 6px;letter-spacing:-.01em}
+.top p{margin:0;color:#C9D8F0;font-size:14.5px;max-width:56ch}
+
+/* ---------- 分頁 ---------- */
+.tabs{
+  position:sticky;top:0;z-index:20;background:var(--surface);
+  border-bottom:1px solid var(--rule);box-shadow:0 1px 0 rgba(21,32,58,.02);
+}
+.tabs-in{max-width:940px;margin:0 auto;display:flex;gap:2px;padding:0 12px;overflow-x:auto}
+.tab{
+  border:0;background:none;color:var(--ink-3);font-weight:600;font-size:14.5px;
+  padding:14px 14px 12px;border-bottom:3px solid transparent;white-space:nowrap;
+}
+.tab[aria-selected="true"]{color:var(--royal);border-bottom-color:var(--gold)}
+
+main{max-width:940px;margin:0 auto;padding:22px 16px 0}
+section[hidden]{display:none}
+
+/* ---------- 進度 ---------- */
+.progress-card{
+  background:var(--surface);border:1px solid var(--rule);border-radius:var(--r-lg);
+  padding:16px 18px;box-shadow:var(--shadow);margin-bottom:18px;
+}
+.progress-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.progress-head strong{font-size:15px}
+.count{font-variant-numeric:tabular-nums;color:var(--ink-2);font-size:14px}
+.count b{color:var(--royal);font-size:22px;font-weight:800}
+.bar{height:9px;border-radius:999px;background:var(--surface-2);margin-top:11px;overflow:hidden}
+.bar>i{display:block;height:100%;width:0;border-radius:999px;background:linear-gradient(90deg,var(--azure),var(--gold));transition:width .25s ease}
+.progress-note{margin:10px 0 0;font-size:13px;color:var(--ink-3)}
+.progress-card.done{border-color:var(--ok);background:var(--ok-soft)}
+.progress-card.done .progress-note{color:var(--ok);font-weight:600}
+
+/* ---------- 群組與項目 ---------- */
+.group{margin-bottom:20px}
+.group-title{
+  display:flex;align-items:center;gap:9px;margin:0 2px 9px;
+  font-size:13px;font-weight:700;letter-spacing:.08em;color:var(--ink-3);
+}
+.group-title::after{content:"";flex:1;height:1px;background:var(--rule-faint)}
+.list{background:var(--surface);border:1px solid var(--rule);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--shadow)}
+.item{display:flex;gap:13px;padding:14px 16px;border-top:1px solid var(--rule-faint);align-items:flex-start}
+.item:first-child{border-top:0}
+.item label{display:flex;gap:13px;flex:1;cursor:pointer;align-items:flex-start}
+.item input[type=checkbox]{
+  appearance:none;-webkit-appearance:none;flex:0 0 auto;
+  width:23px;height:23px;margin:1px 0 0;border:2px solid var(--rule);border-radius:7px;background:#fff;
+  display:grid;place-content:center;transition:.15s;
+}
+.item input[type=checkbox]::after{
+  content:"";width:11px;height:6px;border:2.5px solid #fff;border-top:0;border-right:0;
+  transform:rotate(-45deg) scale(0);transition:transform .15s;margin-top:-3px;
+}
+.item input[type=checkbox]:checked{background:var(--ok);border-color:var(--ok)}
+.item input[type=checkbox]:checked::after{transform:rotate(-45deg) scale(1)}
+.item input[type=checkbox]:focus-visible{outline:2px solid var(--azure);outline-offset:2px}
+.txt{min-width:0}
+.name{font-weight:600;font-size:16px}
+.item.checked .name{color:var(--ink-3);text-decoration:line-through;text-decoration-color:var(--rule)}
+.hint{font-size:13.5px;color:var(--ink-2);margin-top:2px}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:7px}
+.tag{font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--surface-2);color:var(--ink-2)}
+.tag.hand{background:var(--gold-soft);color:var(--warn)}
+.tag.print{background:#EAF1FC;color:var(--azure)}
+
+/* ---------- 流程 / 交接說明 ---------- */
+.card{
+  background:var(--surface);border:1px solid var(--rule);border-radius:var(--r-lg);
+  padding:18px;box-shadow:var(--shadow);margin-bottom:18px;
+}
+.card h2{font-size:17px;margin-bottom:4px}
+.card>p.lead{margin:6px 0 0;color:var(--ink-2);font-size:14.5px}
+.steps{list-style:none;margin:16px 0 0;padding:0;counter-reset:s}
+.steps li{position:relative;padding:0 0 18px 42px;counter-increment:s}
+.steps li::before{
+  content:counter(s);position:absolute;left:0;top:0;width:27px;height:27px;border-radius:50%;
+  background:var(--royal);color:#fff;font-size:13px;font-weight:700;display:grid;place-content:center;
+}
+.steps li::after{content:"";position:absolute;left:13px;top:31px;bottom:2px;width:1.5px;background:var(--rule-faint)}
+.steps li:last-child{padding-bottom:0}
+.steps li:last-child::after{display:none}
+.steps h3{font-size:15.5px}
+.steps p{margin:3px 0 0;font-size:14px;color:var(--ink-2)}
+.callout{
+  border-left:4px solid var(--gold);background:var(--gold-soft);
+  border-radius:0 var(--r-md) var(--r-md) 0;padding:13px 15px;margin-top:16px;font-size:14px;color:#6B4405;
+}
+.callout b{color:#4A2E02}
+
+/* ---------- 表單 ---------- */
+.fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:13px;margin-top:16px}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:12.5px;font-weight:700;color:var(--ink-3);letter-spacing:.03em}
+.field input,.field textarea{
+  border:1px solid var(--rule);border-radius:var(--r-sm);padding:10px 11px;background:#fff;width:100%;
+}
+.field input:focus,.field textarea:focus{outline:2px solid var(--azure);outline-offset:-1px;border-color:var(--azure)}
+.field.wide{grid-column:1/-1}
+.field textarea{min-height:78px;resize:vertical}
+
+.hand-list{margin-top:16px;border:1px solid var(--rule);border-radius:var(--r-md);overflow:hidden}
+.hand-row{display:flex;gap:11px;align-items:center;padding:11px 13px;border-top:1px solid var(--rule-faint);flex-wrap:wrap}
+.hand-row:first-child{border-top:0}
+.hand-row label{display:flex;gap:11px;align-items:center;flex:1 1 190px;min-width:0;cursor:pointer;font-weight:600}
+.hand-row input[type=checkbox]{
+  appearance:none;-webkit-appearance:none;width:21px;height:21px;border:2px solid var(--rule);
+  border-radius:6px;background:#fff;display:grid;place-content:center;flex:0 0 auto;
+}
+.hand-row input[type=checkbox]::after{
+  content:"";width:10px;height:5px;border:2.5px solid #fff;border-top:0;border-right:0;
+  transform:rotate(-45deg) scale(0);transition:transform .15s;margin-top:-3px;
+}
+.hand-row input[type=checkbox]:checked{background:var(--royal);border-color:var(--royal)}
+.hand-row input[type=checkbox]:checked::after{transform:rotate(-45deg) scale(1)}
+.hand-row .to{flex:1 1 190px}
+.hand-row .to input{width:100%;border:1px solid var(--rule);border-radius:var(--r-sm);padding:7px 10px;font-size:14px}
+.hand-row.off{opacity:.45}
+
+/* ---------- 按鈕 ---------- */
+.actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:18px}
+.btn{
+  border:1px solid var(--rule);background:var(--surface);color:var(--ink);
+  border-radius:999px;padding:10px 17px;font-size:14.5px;font-weight:600;transition:.15s;
+}
+.btn:hover{border-color:var(--azure);color:var(--azure)}
+.btn.primary{background:var(--royal);border-color:var(--royal);color:#fff}
+.btn.primary:hover{background:var(--royal-dark);border-color:var(--royal-dark);color:#fff}
+.btn.gold{background:var(--gold);border-color:var(--gold);color:#3A2600}
+.btn.gold:hover{filter:brightness(.95);color:#3A2600}
+
+/* ---------- 交接單預覽 ---------- */
+.sheet{
+  background:#fff;border:1px solid var(--rule);border-radius:var(--r-lg);
+  padding:26px;margin-top:20px;box-shadow:var(--shadow);
+}
+.sheet h2{text-align:center;font-size:20px;letter-spacing:.12em}
+.sheet .sub{text-align:center;color:var(--ink-3);font-size:13px;margin:5px 0 18px}
+table.sheet-t{width:100%;border-collapse:collapse;font-size:14px}
+table.sheet-t th,table.sheet-t td{border:1px solid var(--rule);padding:8px 10px;text-align:left;vertical-align:top}
+table.sheet-t th{background:var(--surface-2);font-weight:700;color:var(--ink-2);white-space:nowrap;width:96px}
+table.sheet-t td.c{text-align:center;width:64px}
+.t-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.t-wrap+.t-wrap{margin-top:14px}
+@media (max-width:640px){
+  table.sheet-t{min-width:520px;font-size:13px}
+  table.sheet-t th,table.sheet-t td{padding:7px 8px}
+}
+.sign{display:flex;gap:26px;margin-top:26px;flex-wrap:wrap}
+.sign div{flex:1 1 180px;border-top:1px solid var(--ink-3);padding-top:7px;font-size:13px;color:var(--ink-2)}
+.empty{color:var(--ink-3);font-size:14px;margin-top:14px;text-align:center}
+
+/* ---------- 底部工具列 ---------- */
+.footbar{
+  position:fixed;left:0;right:0;bottom:0;z-index:30;background:rgba(255,255,255,.93);
+  backdrop-filter:blur(10px);border-top:1px solid var(--rule);padding:10px 16px;
+  padding-bottom:calc(10px + env(safe-area-inset-bottom));
+}
+.footbar-in{max-width:940px;margin:0 auto;display:flex;gap:9px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.footbar .status{font-size:13px;color:var(--ink-3)}
+.toast{
+  position:fixed;left:50%;bottom:86px;transform:translate(-50%,14px);z-index:60;
+  background:var(--ink);color:#fff;padding:10px 18px;border-radius:999px;font-size:14px;
+  opacity:0;pointer-events:none;transition:.22s;
+}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+footer.page{max-width:940px;margin:26px auto 0;padding:0 16px;color:var(--ink-3);font-size:12.5px}
+
+@media (max-width:560px){
+  .top h1{font-size:22px}
+  .sheet{padding:18px}
+}
+
+/* ---------- 列印：只印交接單 ---------- */
+@media print{
+  body{background:#fff;padding:0;font-size:12pt}
+  .top,.tabs,.footbar,.actions,.toast,footer.page,.no-print{display:none !important}
+  main{max-width:none;padding:0}
+  section[hidden]{display:none}
+  .card,.progress-card,.group{display:none}
+  #print-area{display:block !important}
+  .sheet{border:0;box-shadow:none;padding:0;margin:0;border-radius:0}
+  table.sheet-t th,table.sheet-t td{border:1px solid #999}
+  table.sheet-t{min-width:0 !important;font-size:11pt}
+  .t-wrap{overflow:visible}
+  @page{margin:16mm}
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-in">
+    <span class="badge">扶輪社秘書工作台 · <b>Rotary</b></span>
+    <h1>例會應帶清單 & 交接事項</h1>
+    <p>出門前逐項打勾，缺席時把小鐘、社旗、活動旗交接清楚。勾選狀態會自動存在這台裝置，關掉網頁也不會不見。</p>
+  </div>
+</header>
+
+<nav class="tabs">
+  <div class="tabs-in" role="tablist">
+    <button class="tab" role="tab" aria-selected="true"  data-tab="checklist">① 例會應帶清單</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="handover">② 交接事項</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="sheet">③ 交接單（列印／LINE）</button>
+  </div>
+</nav>
+
+<main>
+  <!-- ============ ① 例會應帶清單 ============ -->
+  <section id="checklist">
+    <div class="progress-card" id="prog">
+      <div class="progress-head">
+        <strong>本次例會準備進度</strong>
+        <span class="count"><b id="done">0</b> / <span id="total">0</span> 項</span>
+      </div>
+      <div class="bar"><i id="bar"></i></div>
+      <p class="progress-note" id="prog-note">還沒開始準備。</p>
+    </div>
+    <div id="groups"></div>
+  </section>
+
+  <!-- ============ ② 交接事項 ============ -->
+  <section id="handover" hidden>
+    <div class="card">
+      <h2>秘書無法出席時的交接原則</h2>
+      <p class="lead">秘書缺席不等於例會缺東西。重點是：<b>物品有人保管、有人簽收、下一場活動接得上</b>。</p>
+      <ol class="steps">
+        <li>
+          <h3>例會前 3 天：確認代理人</h3>
+          <p>在社群組公告誰代理秘書，指定一位代理人負責大鐘、鐘錘與小鐘，另指定一位負責簽到與文書（來賓簽到單、QR code、講師費領據、講師桌牌）。</p>
+        </li>
+        <li>
+          <h3>例會前 1 天：實體點交 + 拍照存證</h3>
+          <p>依「③ 交接單」逐項清點，交接當下拍一張全部物品的合照，連同交接單一起貼到社群組，避免事後爭議。</p>
+        </li>
+        <li>
+          <h3>當天會前 30 分鐘：定位</h3>
+          <p>大鐘與鐘錘置於主桌、小鐘交社長／司儀、四大考驗旗與社旗立於講台側、手拉旗掛於合影背板、簽到單與 QR code 立牌放在入口簽到桌。</p>
+        </li>
+        <li>
+          <h3>例會後：活動旗轉交下一場活動負責人</h3>
+          <p>活動旗<b>不回收到秘書手上</b>，直接由代理人當場交給下一場活動（社區服務、聯誼、地區活動）的負責人，並在群組回報「活動旗已交給 ○○○」。</p>
+        </li>
+        <li>
+          <h3>例會後 1 天：歸還與回報</h3>
+          <p>大鐘、鐘錘、小鐘、社旗、四大考驗旗、手拉旗歸回原保管處；講師費領據正本、簽到單正本交回秘書存檔；出席人數與來賓名單回報秘書。</p>
+        </li>
+      </ol>
+      <div class="callout">
+        <b>最容易出包的三件事：</b>鐘錘與大鐘分開放而漏帶、活動旗被帶回家導致下一場活動沒旗、講師費領據沒簽名導致財務無法核銷。這三項請在交接單上特別確認。
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>各物品的交接對象</h2>
+      <div class="list" id="hand-guide" style="box-shadow:none;margin-top:14px"></div>
+    </div>
+  </section>
+
+  <!-- ============ ③ 交接單 ============ -->
+  <section id="sheet" hidden>
+    <div class="card no-print">
+      <h2>填寫交接單</h2>
+      <p class="lead">填完按「產生交接單」，可直接列印簽名，或一鍵複製文字貼到 LINE 群組。</p>
+      <div class="fields">
+        <div class="field"><label for="f-club">社名</label><input id="f-club" placeholder="例：台北○○扶輪社"></div>
+        <div class="field"><label for="f-term">屆次／年度</label><input id="f-term" placeholder="例：2025-26 年度"></div>
+        <div class="field"><label for="f-date">例會日期</label><input id="f-date" type="date"></div>
+        <div class="field"><label for="f-place">例會地點</label><input id="f-place" placeholder="例：○○飯店 3F"></div>
+        <div class="field"><label for="f-from">交付人（秘書）</label><input id="f-from" placeholder="姓名"></div>
+        <div class="field"><label for="f-to">接收人（代理人）</label><input id="f-to" placeholder="姓名"></div>
+        <div class="field"><label for="f-phone">接收人聯絡電話</label><input id="f-phone" placeholder="09xx-xxx-xxx"></div>
+        <div class="field"><label for="f-next">下一場活動負責人（接活動旗）</label><input id="f-next" placeholder="姓名／活動名稱"></div>
+        <div class="field wide"><label for="f-memo">備註</label><textarea id="f-memo" placeholder="例：講師費 3,000 元現金已交代理人，領據請講師當場簽名後交回。"></textarea></div>
+      </div>
+
+      <div class="hand-list" id="hand-items"></div>
+
+      <div class="actions">
+        <button class="btn primary" id="btn-make">產生交接單</button>
+        <button class="btn gold" id="btn-print">列印 / 存成 PDF</button>
+        <button class="btn" id="btn-copy">複製文字給 LINE</button>
+        <button class="btn" id="btn-clear-form">清空表單</button>
+      </div>
+    </div>
+
+    <div id="print-area"></div>
+  </section>
+
+  <footer class="page">
+    資料只存在你自己的瀏覽器（localStorage），不會上傳到任何伺服器。換裝置或清除瀏覽資料後需重新填寫。
+  </footer>
+</main>
+
+<div class="footbar no-print">
+  <div class="footbar-in">
+    <span class="status" id="status">尚未勾選任何項目</span>
+    <span style="display:flex;gap:9px;flex-wrap:wrap">
+      <button class="btn" id="btn-all">全部勾選</button>
+      <button class="btn" id="btn-reset">重置本次例會</button>
+    </span>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   資料：例會應帶物品。要增刪項目改這個陣列就好。
+   handTo = 秘書缺席時，這項該交給誰
+   ============================================================ */
+const ITEMS = [
+  { id:'bell-big',  cat:'鐘具',     name:'大鐘',
+    hint:'放主桌中央，開會／閉會敲鐘用。鐘身與底座一起帶。',
+    handTo:'代理秘書（會後歸回社器材保管處）' },
+  { id:'bell-hammer', cat:'鐘具',   name:'鐘錘',
+    hint:'最常漏帶的一項！請與大鐘放在同一個袋子並當場確認。',
+    handTo:'代理秘書（務必與大鐘同袋）' },
+  { id:'bell-small', cat:'鐘具',    name:'小鐘',
+    hint:'社長／司儀控制流程用，秘書缺席時當面交給代理人。',
+    handTo:'社長或司儀（會前直接交到手上）' },
+  { id:'flag-4way', cat:'旗幟',     name:'四大考驗旗',
+    hint:'立於講台側，宣讀四大考驗時使用。',
+    handTo:'代理秘書' },
+  { id:'flag-club', cat:'旗幟',     name:'社旗',
+    hint:'立於主桌／講台側，交換旗時亦需使用。',
+    handTo:'代理秘書（若當天有交換旗，交司儀）' },
+  { id:'flag-event', cat:'旗幟',    name:'活動旗',
+    hint:'例會後直接交給下一場活動負責人，不要帶回家。',
+    handTo:'下一場活動負責人（會後當場轉交）' },
+  { id:'flag-hand', cat:'旗幟',     name:'手拉旗',
+    hint:'合影背板用，需兩人拉開；收納前先摺好避免皺摺。',
+    handTo:'攝影／聯誼主委' },
+  { id:'doc-guest', cat:'文書印製', name:'來賓簽到單印製',
+    hint:'依報名人數多印 5 份備用，放入口簽到桌。',
+    handTo:'簽到負責人（會後正本交回秘書存檔）' },
+  { id:'doc-qr',    cat:'文書印製', name:'社內簽到單 QR code',
+    hint:'列印成立牌，出發前先用手機掃一次確認連結正常。',
+    handTo:'簽到負責人' },
+  { id:'doc-fee',   cat:'文書印製', name:'講師費領據',
+    hint:'金額、抬頭、身分證字號欄位先填好，只留講師簽名處。',
+    handTo:'代理秘書（講師簽名後正本交財務／秘書）' },
+  { id:'doc-card',  cat:'文書印製', name:'講師桌牌印製',
+    hint:'再次確認講師姓名、職稱、單位無誤，錯字最傷。',
+    handTo:'代理秘書（會前放講師座位）' }
+];
+const CATS = ['鐘具','旗幟','文書印製'];
+const KEY_CHECK = 'rotary-sec-checklist-v1';
+const KEY_FORM  = 'rotary-sec-handover-v1';
+
+const $  = (s,r=document)=>r.querySelector(s);
+const $$ = (s,r=document)=>[...r.querySelectorAll(s)];
+const esc = s => String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+const store = {
+  get(k,f){ try{ return JSON.parse(localStorage.getItem(k)) ?? f; }catch(e){ return f; } },
+  set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
+};
+let checked = store.get(KEY_CHECK, {});
+
+/* ---------------- 分頁 ---------------- */
+$$('.tab').forEach(t=>t.addEventListener('click',()=>{
+  $$('.tab').forEach(x=>x.setAttribute('aria-selected', String(x===t)));
+  ['checklist','handover','sheet'].forEach(id=>$('#'+id).hidden = (id!==t.dataset.tab));
+  window.scrollTo({top:0,behavior:'smooth'});
+}));
+
+/* ---------------- ① 清單 ---------------- */
+function tagsFor(it){
+  const t = [];
+  if(it.cat==='文書印製') t.push('<span class="tag print">需事先印製</span>');
+  if(it.id==='flag-event') t.push('<span class="tag hand">會後轉交下一活動</span>');
+  if(it.id==='bell-small') t.push('<span class="tag hand">缺席時當面交接</span>');
+  return t.length ? `<div class="tags">${t.join('')}</div>` : '';
+}
+function renderChecklist(){
+  $('#groups').innerHTML = CATS.map(cat=>{
+    const rows = ITEMS.filter(i=>i.cat===cat).map(it=>`
+      <div class="item${checked[it.id]?' checked':''}" data-id="${it.id}">
+        <label>
+          <input type="checkbox" ${checked[it.id]?'checked':''} data-id="${it.id}">
+          <span class="txt">
+            <span class="name">${esc(it.name)}</span>
+            <div class="hint">${esc(it.hint)}</div>
+            ${tagsFor(it)}
+          </span>
+        </label>
+      </div>`).join('');
+    return `<div class="group"><div class="group-title">${esc(cat)}</div><div class="list">${rows}</div></div>`;
+  }).join('');
+
+  $$('#groups input[type=checkbox]').forEach(cb=>cb.addEventListener('change',()=>{
+    checked[cb.dataset.id] = cb.checked;
+    store.set(KEY_CHECK, checked);
+    cb.closest('.item').classList.toggle('checked', cb.checked);
+    updateProgress();
+  }));
+  updateProgress();
+}
+function updateProgress(){
+  const total = ITEMS.length;
+  const done  = ITEMS.filter(i=>checked[i.id]).length;
+  $('#done').textContent = done;
+  $('#total').textContent = total;
+  $('#bar').style.width = (done/total*100)+'%';
+  const miss = ITEMS.filter(i=>!checked[i.id]).map(i=>i.name);
+  $('#prog').classList.toggle('done', done===total);
+  $('#prog-note').textContent = done===total
+    ? '全部備齊，可以出發了。'
+    : (done===0 ? '還沒開始準備。' : `還差 ${miss.length} 項：${miss.join('、')}`);
+  $('#status').textContent = done===0 ? '尚未勾選任何項目' : `已備妥 ${done} / ${total} 項`;
+}
+$('#btn-all').addEventListener('click',()=>{
+  ITEMS.forEach(i=>checked[i.id]=true); store.set(KEY_CHECK,checked); renderChecklist(); toast('全部勾選完成');
+});
+$('#btn-reset').addEventListener('click',()=>{
+  if(!confirm('要清除所有勾選，重新準備下一次例會嗎？')) return;
+  checked = {}; store.set(KEY_CHECK,checked); renderChecklist(); toast('已重置');
+});
+
+/* ---------------- ② 交接對象一覽 ---------------- */
+$('#hand-guide').innerHTML = ITEMS.map(it=>`
+  <div class="item">
+    <span class="txt">
+      <span class="name">${esc(it.name)}</span>
+      <div class="hint">交給：${esc(it.handTo)}</div>
+    </span>
+  </div>`).join('');
+
+/* ---------------- ③ 交接單 ---------------- */
+const FIELDS = ['f-club','f-term','f-date','f-place','f-from','f-to','f-phone','f-next','f-memo'];
+let form = store.get(KEY_FORM, {items:{}, to:{}});
+
+$('#hand-items').innerHTML = ITEMS.map(it=>`
+  <div class="hand-row" data-id="${it.id}">
+    <label><input type="checkbox" data-id="${it.id}"> ${esc(it.name)}</label>
+    <span class="to"><input type="text" data-to="${it.id}" placeholder="交給誰？（預設：${esc(it.handTo)}）"></span>
+  </div>`).join('');
+
+function loadForm(){
+  FIELDS.forEach(id=>{ if(form[id]!=null) $('#'+id).value = form[id]; });
+  $$('#hand-items input[type=checkbox]').forEach(cb=>{
+    const on = form.items?.[cb.dataset.id] !== false; // 預設全部交接
+    cb.checked = on;
+    cb.closest('.hand-row').classList.toggle('off', !on);
+  });
+  $$('#hand-items input[data-to]').forEach(inp=>{ inp.value = form.to?.[inp.dataset.to] || ''; });
+}
+function saveForm(){
+  FIELDS.forEach(id=> form[id] = $('#'+id).value );
+  form.items = {}; form.to = {};
+  $$('#hand-items input[type=checkbox]').forEach(cb=> form.items[cb.dataset.id] = cb.checked );
+  $$('#hand-items input[data-to]').forEach(inp=>{ if(inp.value.trim()) form.to[inp.dataset.to] = inp.value.trim(); });
+  store.set(KEY_FORM, form);
+}
+FIELDS.forEach(id=>$('#'+id).addEventListener('input',saveForm));
+$('#hand-items').addEventListener('input',e=>{
+  if(e.target.type==='checkbox') e.target.closest('.hand-row').classList.toggle('off', !e.target.checked);
+  saveForm();
+});
+loadForm();
+
+function selectedItems(){
+  return ITEMS.filter(it=>$(`#hand-items input[data-id="${it.id}"]`).checked)
+              .map(it=>({...it, to: form.to?.[it.id] || it.handTo}));
+}
+function fmtDate(v){
+  if(!v) return '＿＿＿年＿＿月＿＿日';
+  const [y,m,d] = v.split('-'); return `${y} 年 ${+m} 月 ${+d} 日`;
+}
+function buildSheet(){
+  const picked = selectedItems();
+  if(!picked.length){
+    $('#print-area').innerHTML = '<div class="sheet"><p class="empty">請至少勾選一項要交接的物品。</p></div>';
+    return;
+  }
+  const v = id => $('#'+id).value.trim();
+  const rows = picked.map((it,i)=>`
+    <tr><td class="c">${i+1}</td><td>${esc(it.name)}</td><td>${esc(it.to)}</td><td class="c">□</td></tr>`).join('');
+  $('#print-area').innerHTML = `
+    <div class="sheet">
+      <h2>例 會 物 品 交 接 單</h2>
+      <p class="sub">${esc(v('f-club')||'＿＿＿＿扶輪社')}　${esc(v('f-term'))}</p>
+      <div class="t-wrap"><table class="sheet-t">
+        <tr><th>例會日期</th><td>${fmtDate(v('f-date'))}</td><th>地點</th><td>${esc(v('f-place')||'—')}</td></tr>
+        <tr><th>交付人</th><td>${esc(v('f-from')||'—')}（秘書）</td><th>接收人</th><td>${esc(v('f-to')||'—')}　${esc(v('f-phone'))}</td></tr>
+        <tr><th>活動旗<br>後續接收</th><td colspan="3">${esc(v('f-next')||'下一場活動負責人：＿＿＿＿＿＿')}</td></tr>
+      </table></div>
+      <div class="t-wrap"><table class="sheet-t">
+        <thead><tr><th class="c">序</th><th style="width:auto">交接物品</th><th style="width:auto">交予</th><th class="c">點收</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table></div>
+      <div class="t-wrap"><table class="sheet-t">
+        <tr><th>備註</th><td>${esc(v('f-memo')||'—').replace(/\n/g,'<br>')}</td></tr>
+      </table></div>
+      <div class="sign">
+        <div>交付人簽名（秘書）</div>
+        <div>接收人簽名</div>
+        <div>歸還／轉交日期</div>
+      </div>
+    </div>`;
+}
+function buildText(){
+  const v = id => $('#'+id).value.trim();
+  const picked = selectedItems();
+  const L = [];
+  L.push('【例會物品交接單】');
+  if(v('f-club')||v('f-term')) L.push(`${v('f-club')} ${v('f-term')}`.trim());
+  L.push(`例會日期：${fmtDate(v('f-date'))}${v('f-place')?'　地點：'+v('f-place'):''}`);
+  L.push(`交付人（秘書）：${v('f-from')||'—'}`);
+  L.push(`接收人：${v('f-to')||'—'}${v('f-phone')?'（'+v('f-phone')+'）':''}`);
+  L.push('');
+  L.push('交接物品：');
+  picked.forEach((it,i)=>L.push(`${i+1}. ${it.name} → ${it.to}`));
+  if(v('f-next')){ L.push(''); L.push(`活動旗會後轉交：${v('f-next')}`); }
+  if(v('f-memo')){ L.push(''); L.push('備註：'+v('f-memo')); }
+  L.push('');
+  L.push('※ 請點收後於群組回覆「已收到」。');
+  return L.join('\n');
+}
+$('#btn-make').addEventListener('click',()=>{ saveForm(); buildSheet(); toast('交接單已產生'); $('#print-area').scrollIntoView({behavior:'smooth'}); });
+$('#btn-print').addEventListener('click',()=>{ saveForm(); buildSheet(); setTimeout(()=>window.print(),120); });
+$('#btn-copy').addEventListener('click',async()=>{
+  saveForm();
+  const txt = buildText();
+  try{ await navigator.clipboard.writeText(txt); toast('已複製，可貼到 LINE'); }
+  catch(e){
+    const ta = document.createElement('textarea');
+    ta.value = txt; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy'); toast('已複製，可貼到 LINE'); }
+    catch(_){ prompt('請手動複製以下內容：', txt); }
+    ta.remove();
+  }
+});
+$('#btn-clear-form').addEventListener('click',()=>{
+  if(!confirm('要清空交接單的所有欄位嗎？')) return;
+  form = {items:{}, to:{}}; store.set(KEY_FORM, form);
+  FIELDS.forEach(id=>$('#'+id).value='');
+  loadForm(); $('#print-area').innerHTML=''; toast('表單已清空');
+});
+
+/* ---------------- toast ---------------- */
+let toastTimer;
+function toast(msg){
+  const el = $('#toast'); el.textContent = msg; el.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(()=>el.classList.remove('show'), 1900);
+}
+
+renderChecklist();
+</script>
+</body>
+</html>
