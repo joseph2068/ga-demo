@@ -268,14 +268,14 @@ footer.page{max-width:940px;margin:26px auto 0;padding:0 16px;color:var(--ink-3)
   <div class="top-in">
     <span class="badge">扶輪社秘書工作台 · <b>Rotary</b></span>
     <h1>例會應帶清單 & 交接事項</h1>
-    <p>先選例會型式（一般場地帶大鐘，活動例會帶小鐘），出門前逐項打勾，缺席時把鐘、社旗、活動旗交接清楚。勾選狀態會自動存在這台裝置。</p>
+    <p>先選例會型式與有無講師，出門前逐項打勾。只有秘書無法出席時才需要交接，屆時再到第②③頁辦理點交。勾選狀態會自動存在這台裝置。</p>
   </div>
 </header>
 
 <nav class="tabs">
   <div class="tabs-in" role="tablist">
     <button class="tab" role="tab" aria-selected="true"  data-tab="checklist">① 例會應帶清單</button>
-    <button class="tab" role="tab" aria-selected="false" data-tab="handover">② 交接事項</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="handover">② 交接事項（缺席時）</button>
     <button class="tab" role="tab" aria-selected="false" data-tab="sheet">③ 交接單（列印／LINE）</button>
   </div>
 </nav>
@@ -285,6 +285,8 @@ footer.page{max-width:940px;margin:26px auto 0;padding:0 16px;color:var(--ink-3)
   <section id="checklist">
     <p class="mode-label">這次是哪一種例會？（大鐘與小鐘擇一）</p>
     <div class="modebar" id="modebar-1"></div>
+    <p class="mode-label">本次有邀請講師嗎？</p>
+    <div class="modebar" id="speakerbar-1"></div>
     <div class="progress-card" id="prog">
       <div class="progress-head">
         <strong>本次例會準備進度</strong>
@@ -298,9 +300,22 @@ footer.page{max-width:940px;margin:26px auto 0;padding:0 16px;color:var(--ink-3)
 
   <!-- ============ ② 交接事項 ============ -->
   <section id="handover" hidden>
+    <p class="mode-label">秘書本次出席狀況？</p>
+    <div class="modebar" id="absentbar-1"></div>
+
+    <div class="card" id="handover-off" hidden>
+      <h2>本次不需要交接</h2>
+      <p class="lead">秘書會出席，所有物品由秘書自行攜帶、會後自行收回，不必辦理任何點交。</p>
+      <div class="callout">
+        <b>只有秘書無法出席時才需要交接。</b>屆時才把敲鐘器具、旗幟與文書交給代理人，活動旗也才由代理人在會後當場交給下一場活動負責人。
+        確定無法出席的話，請按上面的「秘書無法出席」。
+      </div>
+    </div>
+
+    <div id="handover-body">
     <div class="card">
       <h2>秘書無法出席時的交接原則</h2>
-      <p class="lead">秘書缺席不等於例會缺東西。重點是：<b>物品有人保管、有人簽收、下一場活動接得上</b>。</p>
+      <p class="lead">平常秘書自己帶、自己收，不需要交接。<b>只有秘書無法出席這一次例會時</b>才辦點交，重點是：物品有人保管、有人簽收、下一場活動接得上。</p>
       <ol class="steps">
         <li>
           <h3>例會前 3 天：確認代理人</h3>
@@ -320,7 +335,7 @@ footer.page{max-width:940px;margin:26px auto 0;padding:0 16px;color:var(--ink-3)
         </li>
         <li>
           <h3>例會後 1 天：歸還與回報</h3>
-          <p>當次使用的鐘具（大鐘＋鐘錘或小鐘）、社旗、四大考驗旗、手拉旗歸回原保管處；講師費領據正本、簽到單正本交回秘書存檔；出席人數與來賓名單回報秘書。</p>
+          <p>當次使用的鐘具（大鐘＋鐘錘或小鐘）、社旗、四大考驗旗、手拉旗歸回原保管處；講師費領據正本（若有講師）、簽到單正本交回秘書存檔；出席人數與來賓名單回報秘書。</p>
         </li>
       </ol>
       <div class="callout">
@@ -332,15 +347,27 @@ footer.page{max-width:940px;margin:26px auto 0;padding:0 16px;color:var(--ink-3)
       <h2>各物品的交接對象</h2>
       <div class="list" id="hand-guide" style="box-shadow:none;margin-top:14px"></div>
     </div>
+    </div>
   </section>
 
   <!-- ============ ③ 交接單 ============ -->
   <section id="sheet" hidden>
+    <p class="mode-label no-print">秘書本次出席狀況？</p>
+    <div class="modebar no-print" id="absentbar-2"></div>
+
+    <div class="card no-print" id="sheet-off" hidden>
+      <h2>本次不需要交接單</h2>
+      <p class="lead">秘書出席，物品不轉交，所以沒有交接單要填。上面切換成「秘書無法出席」就會出現表單。</p>
+    </div>
+
+    <div id="sheet-body">
     <div class="card no-print">
       <h2>填寫交接單</h2>
       <p class="lead">填完按「產生交接單」，可直接列印簽名，或一鍵複製文字貼到 LINE 群組。</p>
       <p class="mode-label" style="margin-top:16px">例會型式</p>
       <div class="modebar" id="modebar-2"></div>
+      <p class="mode-label">有無講師</p>
+      <div class="modebar" id="speakerbar-2"></div>
       <div class="fields">
         <div class="field"><label for="f-club">社名</label><input id="f-club" placeholder="例：台北○○扶輪社"></div>
         <div class="field"><label for="f-term">屆次／年度</label><input id="f-term" placeholder="例：2025-26 年度"></div>
@@ -364,6 +391,7 @@ footer.page{max-width:940px;margin:26px auto 0;padding:0 16px;color:var(--ink-3)
     </div>
 
     <div id="print-area"></div>
+    </div>
   </section>
 
   <footer class="page">
@@ -416,11 +444,11 @@ const ITEMS = [
   { id:'doc-qr',    cat:'文書印製', name:'社內簽到單 QR code',
     hint:'列印成立牌，出發前先用手機掃一次確認連結正常。',
     handTo:'簽到負責人' },
-  { id:'doc-fee',   cat:'文書印製', name:'講師費領據',
-    hint:'金額、抬頭、身分證字號欄位先填好，只留講師簽名處。',
+  { id:'doc-fee',   cat:'文書印製', name:'講師費領據', needs:'speaker',
+    hint:'有邀請講師才需要。金額、抬頭、身分證字號欄位先填好，只留講師簽名處。',
     handTo:'代理秘書（講師簽名後正本交財務／秘書）' },
-  { id:'doc-card',  cat:'文書印製', name:'講師桌牌印製',
-    hint:'再次確認講師姓名、職稱、單位無誤，錯字最傷。',
+  { id:'doc-card',  cat:'文書印製', name:'講師桌牌印製', needs:'speaker',
+    hint:'有邀請講師才需要。再次確認講師姓名、職稱、單位無誤，錯字最傷。',
     handTo:'代理秘書（會前放講師座位）' }
 ];
 const CATS = ['鐘具','旗幟','文書印製'];
@@ -430,7 +458,9 @@ const MODES = {
 };
 const KEY_CHECK = 'rotary-sec-checklist-v1';
 const KEY_FORM  = 'rotary-sec-handover-v1';
-const KEY_MODE  = 'rotary-sec-mode-v1';
+const KEY_MODE   = 'rotary-sec-mode-v1';
+const KEY_SPEAKER= 'rotary-sec-speaker-v1';
+const KEY_ABSENT = 'rotary-sec-absent-v1';
 
 const $  = (s,r=document)=>r.querySelector(s);
 const $$ = (s,r=document)=>[...r.querySelectorAll(s)];
@@ -443,9 +473,12 @@ const store = {
 let checked = store.get(KEY_CHECK, {});
 let mode = store.get(KEY_MODE, 'normal');
 if(!MODES[mode]) mode = 'normal';
+let speaker = store.get(KEY_SPEAKER, true) === true;   // 本次是否邀請講師
+let absent  = store.get(KEY_ABSENT,  false) === true;  // 秘書本次是否無法出席
 
-// 依例會型式篩選：未標 mode 的項目兩種例會都要帶
-const activeItems = () => ITEMS.filter(i => !i.mode || i.mode === mode);
+// 依例會型式與有無講師篩選；未標記的項目一律要帶
+const activeItems = () => ITEMS.filter(i =>
+  (!i.mode || i.mode === mode) && (i.needs !== 'speaker' || speaker));
 
 /* ---------------- 分頁 ---------------- */
 $$('.tab').forEach(t=>t.addEventListener('click',()=>{
@@ -455,28 +488,63 @@ $$('.tab').forEach(t=>t.addEventListener('click',()=>{
 }));
 
 /* ---------------- 例會型式 ---------------- */
-function renderModebars(){
-  const html = Object.entries(MODES).map(([k,m])=>`
-    <button type="button" data-mode="${k}" aria-pressed="${k===mode}">
-      ${esc(m.name)}<small>${esc(m.sub)}</small>
+function bar(sels, opts){
+  const html = opts.map(o=>`
+    <button type="button" ${o.attr} aria-pressed="${o.on}">
+      ${esc(o.name)}<small>${esc(o.sub)}</small>
     </button>`).join('');
-  ['#modebar-1','#modebar-2'].forEach(sel=>{ $(sel).innerHTML = html; });
+  sels.forEach(sel=>{ const el=$(sel); if(el) el.innerHTML = html; });
+}
+function renderBars(){
+  bar(['#modebar-1','#modebar-2'], Object.entries(MODES).map(([k,m])=>
+    ({attr:`data-mode="${k}"`, on:k===mode, name:m.name, sub:m.sub})));
+  bar(['#speakerbar-1','#speakerbar-2'], [
+    {attr:'data-speaker="1"', on:speaker,  name:'有邀請講師', sub:'要備領據與桌牌'},
+    {attr:'data-speaker="0"', on:!speaker, name:'沒有講師',   sub:'免領據與桌牌'}
+  ]);
+  bar(['#absentbar-1','#absentbar-2'], [
+    {attr:'data-absent="0"', on:!absent, name:'秘書會出席', sub:'不需交接'},
+    {attr:'data-absent="1"', on:absent,  name:'秘書無法出席', sub:'需要交接'}
+  ]);
+}
+function renderAll(){
+  renderBars(); renderChecklist(); renderHandGuide(); renderHandItems(); renderGate();
+}
+function renderGate(){
+  $('#handover-body').hidden = !absent;
+  $('#handover-off').hidden  = absent;
+  $('#sheet-body').hidden    = !absent;
+  $('#sheet-off').hidden     = absent;
+  if(!absent) $('#print-area').innerHTML = '';
 }
 document.addEventListener('click', e=>{
   const b = e.target.closest('.modebar button');
   if(!b) return;
-  mode = b.dataset.mode;
-  store.set(KEY_MODE, mode);
-  renderModebars(); renderChecklist(); renderHandGuide(); renderHandItems();
-  toast(MODES[mode].name + '：' + MODES[mode].sub);
+  const d = b.dataset;
+  if(d.mode){
+    mode = d.mode; store.set(KEY_MODE, mode);
+    let msg = MODES[mode].name + '：' + MODES[mode].sub;
+    if(mode === 'event' && speaker){   // 活動例會預設不邀講師
+      speaker = false; store.set(KEY_SPEAKER, speaker);
+      msg += '，已自動關掉講師項目';
+    }
+    renderAll(); toast(msg);
+  } else if(d.speaker){
+    speaker = d.speaker === '1'; store.set(KEY_SPEAKER, speaker);
+    renderAll(); toast(speaker ? '已加入講師費領據與桌牌' : '已移除講師費領據與桌牌');
+  } else if(d.absent){
+    absent = d.absent === '1'; store.set(KEY_ABSENT, absent);
+    renderAll(); toast(absent ? '需要交接：請填交接單' : '秘書會出席，不需交接');
+  }
 });
 
 /* ---------------- ① 清單 ---------------- */
 function tagsFor(it){
   const t = [];
   if(it.cat==='文書印製') t.push('<span class="tag print">需事先印製</span>');
-  if(it.id==='flag-event') t.push('<span class="tag hand">會後轉交下一活動</span>');
-  if(it.id==='bell-small') t.push('<span class="tag hand">缺席時當面交接</span>');
+  if(it.needs==='speaker') t.push('<span class="tag">有講師才需要</span>');
+  if(absent && it.id==='flag-event') t.push('<span class="tag hand">會後轉交下一活動</span>');
+  if(absent && it.id==='bell-small') t.push('<span class="tag hand">當面交給代理人</span>');
   return t.length ? `<div class="tags">${t.join('')}</div>` : '';
 }
 function renderChecklist(){
@@ -492,7 +560,12 @@ function renderChecklist(){
           </span>
         </label>
       </div>`).join('');
-    const note = cat==='鐘具' ? `<p class="group-note">${esc(MODES[mode].note)}</p>` : '';
+    let note = '';
+    if(cat==='鐘具') note = MODES[mode].note;
+    if(cat==='文書印製') note = speaker
+      ? '本次有講師：領據請先填好金額與抬頭，桌牌確認姓名職稱。'
+      : '本次沒有講師，講師費領據與桌牌免準備。';
+    note = note ? `<p class="group-note">${esc(note)}</p>` : '';
     return `<div class="group"><div class="group-title">${esc(cat)}</div><div class="list">${rows}</div>${note}</div>`;
   }).join('');
 
@@ -534,7 +607,7 @@ function renderHandGuide(){
         <span class="name">${esc(it.name)}</span>
         <div class="hint">交給：${esc(it.handTo)}</div>
       </span>
-    </div>`).join('') + `<div class="item"><span class="txt"><div class="hint">${esc(MODES[mode].note)}</div></span></div>`;
+    </div>`).join('') + `<div class="item"><span class="txt"><div class="hint">${esc(MODES[mode].note)}${speaker?'':' 本次沒有講師，領據與桌牌不列入交接。'}</div></span></div>`;
 }
 
 /* ---------------- ③ 交接單 ---------------- */
@@ -571,8 +644,6 @@ $('#hand-items').addEventListener('input',e=>{
   if(e.target.type==='checkbox') e.target.closest('.hand-row').classList.toggle('off', !e.target.checked);
   saveForm();
 });
-renderHandItems();
-
 function selectedItems(){
   return activeItems().filter(it=>$(`#hand-items input[data-id="${it.id}"]`)?.checked)
                       .map(it=>({...it, to: form.to?.[it.id] || it.handTo}));
@@ -596,7 +667,7 @@ function buildSheet(){
       <p class="sub">${esc(v('f-club')||'＿＿＿＿扶輪社')}　${esc(v('f-term'))}</p>
       <div class="t-wrap"><table class="sheet-t">
         <tr><th>例會日期</th><td>${fmtDate(v('f-date'))}</td><th>地點</th><td>${esc(v('f-place')||'—')}</td></tr>
-        <tr><th>例會型式</th><td colspan="3">${esc(MODES[mode].name)}（${esc(MODES[mode].sub)}）</td></tr>
+        <tr><th>例會型式</th><td colspan="3">${esc(MODES[mode].name)}（${esc(MODES[mode].sub)}）　${speaker?'本次有邀請講師':'本次無講師'}</td></tr>
         <tr><th>交付人</th><td>${esc(v('f-from')||'—')}（秘書）</td><th>接收人</th><td>${esc(v('f-to')||'—')}　${esc(v('f-phone'))}</td></tr>
         <tr><th>活動旗<br>後續接收</th><td colspan="3">${esc(v('f-next')||'下一場活動負責人：＿＿＿＿＿＿')}</td></tr>
       </table></div>
@@ -621,7 +692,7 @@ function buildText(){
   L.push('【例會物品交接單】');
   if(v('f-club')||v('f-term')) L.push(`${v('f-club')} ${v('f-term')}`.trim());
   L.push(`例會日期：${fmtDate(v('f-date'))}${v('f-place')?'　地點：'+v('f-place'):''}`);
-  L.push(`例會型式：${MODES[mode].name}（${MODES[mode].sub}）`);
+  L.push(`例會型式：${MODES[mode].name}（${MODES[mode].sub}）　${speaker?'有邀請講師':'無講師'}`);
   L.push(`交付人（秘書）：${v('f-from')||'—'}`);
   L.push(`接收人：${v('f-to')||'—'}${v('f-phone')?'（'+v('f-phone')+'）':''}`);
   L.push('');
@@ -662,9 +733,7 @@ function toast(msg){
   clearTimeout(toastTimer); toastTimer = setTimeout(()=>el.classList.remove('show'), 1900);
 }
 
-renderModebars();
-renderChecklist();
-renderHandGuide();
+renderAll();
 </script>
 </body>
 </html>
