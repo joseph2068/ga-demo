@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<!-- 長照博覽會問卷網站：填完問卷即可加入 LINE 好友 -->
+<!-- 長照博覽會：掃 QR Code 加入 LINE 好友（單頁） -->
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
-  <!-- 讓手機也能正常顯示（博覽會現場大多用手機掃碼填寫） -->
+  <!-- 讓手機也能正常顯示 -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>長照諮詢問卷｜凱基人壽 吳嘉豐</title>
+  <title>加入 LINE｜凱基人壽 吳嘉豐</title>
   <!-- 樣式完全獨立放在 style.css -->
   <link rel="stylesheet" href="style.css" />
 </head>
@@ -17,89 +17,28 @@
     <p class="subtitle">專屬顧問　吳嘉豐　為您服務</p>
   </header>
 
-  <!-- ===== 主要內容區 ===== -->
+  <!-- ===== 主要內容：加入 LINE 卡片 ===== -->
   <main class="container">
+    <section class="card line-card">
+      <h2 class="card-title">加入我的 LINE 👋</h2>
+      <p class="card-note">歡迎掃描下方 QR Code 加入吳嘉豐顧問的 LINE，為您提供專屬長照規劃諮詢。</p>
 
-    <!-- 問卷卡片 -->
-    <section class="card" id="formCard">
-      <h2 class="card-title">免費長照需求小問卷</h2>
-      <p class="card-note">只要 1 分鐘，幫您了解自己的長照準備度，完成後即可加入 LINE 領取專屬資訊。</p>
-
-      <!-- 問卷表單 -->
-      <form id="surveyForm" class="form">
-
-        <!-- 姓名 -->
-        <label class="field">
-          <span class="label-text">您的稱呼 <b class="req">*</b></span>
-          <input type="text" name="name" placeholder="例如：王先生 / 陳小姐" required />
-        </label>
-
-        <!-- 電話 -->
-        <label class="field">
-          <span class="label-text">聯絡電話 <b class="req">*</b></span>
-          <input type="tel" name="phone" placeholder="例如：0912-345-678" required />
-        </label>
-
-        <!-- 年齡層 -->
-        <label class="field">
-          <span class="label-text">您的年齡層 <b class="req">*</b></span>
-          <select name="age" required>
-            <option value="">請選擇</option>
-            <option>30 歲以下</option>
-            <option>31–40 歲</option>
-            <option>41–50 歲</option>
-            <option>51–60 歲</option>
-            <option>61 歲以上</option>
-          </select>
-        </label>
-
-        <!-- 最想了解的主題（可複選） -->
-        <fieldset class="field">
-          <legend class="label-text">最想了解的主題（可複選）</legend>
-          <label class="check"><input type="checkbox" name="topic" value="長照險規劃" /> 長照險規劃</label>
-          <label class="check"><input type="checkbox" name="topic" value="醫療險規劃" /> 醫療險規劃</label>
-          <label class="check"><input type="checkbox" name="topic" value="退休金準備" /> 退休金準備</label>
-          <label class="check"><input type="checkbox" name="topic" value="保單健檢" /> 既有保單健檢</label>
-        </fieldset>
-
-        <!-- 是否已有長照準備 -->
-        <fieldset class="field">
-          <legend class="label-text">您目前是否已有長照相關保障？ <b class="req">*</b></legend>
-          <label class="radio"><input type="radio" name="ready" value="已有" required /> 已經有</label>
-          <label class="radio"><input type="radio" name="ready" value="還沒有" /> 還沒有</label>
-          <label class="radio"><input type="radio" name="ready" value="不確定" /> 不太確定</label>
-        </fieldset>
-
-        <!-- 送出按鈕 -->
-        <button type="submit" class="submit-btn">送出問卷，加入 LINE</button>
-      </form>
-    </section>
-
-    <!-- 完成後顯示的 LINE 加入卡片（預設隱藏，由 script.js 控制） -->
-    <section class="card line-card" id="lineCard" hidden>
-      <h2 class="card-title">感謝您的填寫！🎉</h2>
-      <p class="card-note">請掃描下方 QR Code 或點擊按鈕，加入吳嘉豐顧問的 LINE，領取您的專屬長照資訊。</p>
-
-      <!-- QR Code 圖片請直接放在根目錄，命名為 line-qr.png -->
+      <!-- QR Code 圖片直接放在根目錄：line-qr.png -->
       <img class="qr" src="line-qr.png" alt="LINE 加入好友 QR Code"
            onerror="this.style.display='none'" />
 
-      <!-- 加入好友按鈕：請把下方網址換成您的 LINE 官方帳號 / 加好友連結 -->
-      <a class="line-btn" id="lineBtn"
+      <!-- 加入好友按鈕：請把下方網址換成您的 LINE 加好友連結 -->
+      <a class="line-btn"
          href="https://line.me/R/ti/p/@你的LINE_ID"
-         target="_blank" rel="noopener">加入 LINE 好友</a>
+         target="_blank" rel="noopener">點我加入 LINE 好友</a>
 
       <p class="card-small">凱基人壽　專屬顧問　吳嘉豐</p>
     </section>
-
   </main>
 
   <!-- ===== 頁尾 ===== -->
   <footer class="footer">
-    <p>凱基人壽｜本問卷僅供長照需求參考，實際保障內容以保單條款為準。</p>
+    <p>凱基人壽｜本頁僅供長照諮詢聯繫使用。</p>
   </footer>
-
-  <!-- 行為邏輯完全獨立放在 script.js -->
-  <script src="script.js"></script>
 </body>
 </html>
