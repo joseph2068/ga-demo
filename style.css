@@ -1,0 +1,181 @@
+/* ===== 全站基本設定 ===== */
+/* box-sizing 讓寬度計算更直覺，初學者比較不會算錯邊界 */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  /* 使用系統內建字體，手機電腦都好看 */
+  font-family: "Microsoft JhengHei", "PingFang TC", sans-serif;
+  background: #f0f4f8;      /* 淡藍灰背景，溫和不刺眼 */
+  color: #2d3748;
+  line-height: 1.6;
+}
+
+/* ===== 頁首 ===== */
+.header {
+  /* 凱基品牌感的深藍漸層 */
+  background: linear-gradient(135deg, #003b73, #0074b7);
+  color: #ffffff;
+  text-align: center;
+  padding: 32px 16px;
+}
+
+.brand {
+  font-size: 18px;
+  letter-spacing: 4px;      /* 字距拉開，看起來像品牌字樣 */
+  opacity: 0.9;
+}
+
+.title {
+  font-size: 26px;
+  margin: 8px 0;
+}
+
+.subtitle {
+  font-size: 16px;
+  opacity: 0.95;
+}
+
+/* ===== 內容容器：限制最大寬度，桌機也不會太寬 ===== */
+.container {
+  max-width: 520px;
+  margin: 24px auto;
+  padding: 0 16px;
+}
+
+/* ===== 卡片：白底圓角陰影 ===== */
+.card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+  margin-bottom: 20px;
+}
+
+.card-title {
+  font-size: 20px;
+  color: #003b73;
+  margin-bottom: 8px;
+}
+
+.card-note {
+  font-size: 14px;
+  color: #5a6775;
+  margin-bottom: 20px;
+}
+
+.card-small {
+  text-align: center;
+  font-size: 13px;
+  color: #5a6775;
+  margin-top: 16px;
+}
+
+/* ===== 表單 ===== */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;              /* 每個欄位之間自動留間距 */
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: none;          /* fieldset 預設有邊框，這裡拿掉 */
+}
+
+.label-text {
+  font-size: 15px;
+  font-weight: bold;
+}
+
+/* 必填的紅色星號 */
+.req {
+  color: #e53e3e;
+}
+
+/* 輸入框與下拉選單共用樣式 */
+input[type="text"],
+input[type="tel"],
+select {
+  width: 100%;
+  padding: 12px;
+  font-size: 16px;        /* 16px 可避免 iPhone 自動放大 */
+  border: 1px solid #cbd5e0;
+  border-radius: 10px;
+  background: #fff;
+}
+
+input:focus,
+select:focus {
+  outline: none;
+  border-color: #0074b7;  /* 點選時變藍，提示使用者 */
+}
+
+/* 複選、單選選項 */
+.check,
+.radio {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: normal;
+  cursor: pointer;
+}
+
+/* ===== 送出按鈕 ===== */
+.submit-btn {
+  background: #00b900;    /* LINE 綠，呼應「加入 LINE」 */
+  color: #fff;
+  font-size: 17px;
+  font-weight: bold;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  margin-top: 6px;
+}
+
+.submit-btn:hover {
+  background: #009b00;
+}
+
+/* ===== 完成後的 LINE 卡片 ===== */
+.line-card {
+  text-align: center;
+}
+
+.qr {
+  width: 200px;
+  height: 200px;
+  object-fit: contain;
+  margin: 10px auto 20px;
+  display: block;
+}
+
+.line-btn {
+  display: inline-block;
+  background: #00b900;
+  color: #fff;
+  text-decoration: none;
+  font-size: 17px;
+  font-weight: bold;
+  padding: 14px 28px;
+  border-radius: 12px;
+}
+
+.line-btn:hover {
+  background: #009b00;
+}
+
+/* ===== 頁尾 ===== */
+.footer {
+  text-align: center;
+  font-size: 12px;
+  color: #8a96a3;
+  padding: 24px 16px;
+}
